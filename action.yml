@@ -1,0 +1,22 @@
+name: "Issue Sync"
+description: "Synchronizes issues to a project board"
+author: paritytech
+branding:
+  icon: check-square
+  color: green
+inputs:
+  project:
+    required: true
+    type: number
+  token:
+    required: true
+    type: string
+  target-project-field:
+    required: true
+    type: string
+  target-project-field-value:
+    required: true
+    type: string
+runs:
+  using: node16
+  main: dist/index.js
