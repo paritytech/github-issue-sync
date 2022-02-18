@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: node_modules/.bin/eslint
+        language: node
+        files: \.[^\.]*(t|j)s$
+        args: ["--quiet"]
+        exclude: ^dist\/
+      - id: prettier
+        name: prettier
+        entry: node_modules/.bin/prettier
+        language: node
+        files: \.json$
+        args: ["--check"]
+        exclude: ^dist\/
+      - id: typecheck
+        name: typecheck
+        entry: node_modules/.bin/tsc-files
+        language: node
+        args: ["--noEmit"]
+        files: \.ts$
+        exclude: ^dist\/
