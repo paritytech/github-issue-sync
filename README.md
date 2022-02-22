@@ -23,10 +23,9 @@ Building entails
 
 Since the build output consists of plain .js files, which can be executed
 directly by Node.js, it _could_ be ran directly without packaging first; we
-regardless prefer to use `ncc` because it bundles all the code (_including the
-dependencies' code_) into a single file ahead-of-time, meaning the workflow can
-promptly start the action without having to install dependencies first for every
-run.
+regardless prefer to use `ncc` because it bundles all the code, including the
+dependencies' code, into a single file ahead-of-time, meaning the workflow can
+promptly start the action without having to install dependencies for every run.
 
 ## Build steps <a name="build-steps"></a>
 
@@ -72,7 +71,7 @@ next time the action is ran.
 A GitHub workflow will always clone the HEAD of `${organization}/${repo}@${tag}`
 **when the action is executed**, as exemplified by the following line:
 
-`uses: paritytech/github-issue-sync@tag`
+`uses: user/github-issue-sync@tag`
 
 That behavior makes it viable to release by committing build artifacts directly
 to a tag and then using the new tag in the repositories where this action is
@@ -84,8 +83,8 @@ installed.
 2. Use the new tag in your workflows:
 
 ```diff
--uses: paritytech/github-issue-sync@1
-+uses: paritytech/github-issue-sync@2
+-uses: user/github-issue-sync@1
++uses: user/github-issue-sync@2
 ```
 
 # Workflow configuration <a name="workflow-configuration"></a>
@@ -107,7 +106,10 @@ jobs:
       - name: github-issue-sync
         uses: paritytech/github-issue-sync@tag
         with:
-          # A token with "write:org", "read:org" and "repo" permissions
+          # The token needs to have the following permissions
+          # - "read:org" is used to read the project's board
+          # - "write:org" is used to assign issues to the project's board
+          # - "repo" is used to access issues through the API
           token: ${{ secrets.PROJECTS_TOKEN }}
 
           # The number of the project which the issues will be synced to
@@ -123,6 +125,6 @@ jobs:
 
 # Install <a name="install"></a>
 
-Having [released](#release) the code, the final step is to copy the (workflow
-configuration)[#workflow-configuration] to the `.github/workflows` folder of
+Having [released](#release) the code, the final step is to copy the [workflow
+configuration](#workflow-configuration) to the `.github/workflows` folder of
 projects whose issues need to be synced.
