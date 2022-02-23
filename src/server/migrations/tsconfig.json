@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../build/migrations",
-    // Compile migrations to commponjs because their modules are imported
+    // Compile migrations to commonjs because their modules are imported
     // through "require"
     "module": "commonjs"
   },
