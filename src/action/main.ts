@@ -2,9 +2,9 @@ import { getInput } from "@actions/core"
 import { context, getOctokit } from "@actions/github"
 import assert from "assert"
 
-import { syncIssue } from "./core"
+import { syncIssue } from "src/core"
 
-const main = async function () {
+const main = async () => {
   const {
     payload: { issue },
     repo: { owner: organization },

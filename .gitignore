@@ -2,12 +2,13 @@
 node_modules
 
 # TypeScript compilation directory
-build
+/build
+!/build/package.json
 
 # ncc output directory used for the action release
 # normally the package would be ignored, but in this case it shouldn't because
 # it is committed for github tags in our release process
-# dist
+# dist/action
 
 # yarn
 yarn-error.log

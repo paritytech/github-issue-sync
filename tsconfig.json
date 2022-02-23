@@ -3,14 +3,14 @@
     "baseUrl": ".",
     "target": "ES2021", // Node.js LTS 16
     "lib": ["ES2021"], // Node.js LTS 16
+    "moduleResolution": "node",
+    "module": "esnext",
     "sourceMap": false,
     "declaration": false,
-    "module": "commonjs",
-    "outDir": "build",
     "strict": true,
     "esModuleInterop": true,
     "types": ["node"],
     "useUnknownInCatchVariables": false
   },
-  "include": ["src"]
+  "include": ["src", "templates"]
 }
