@@ -52,6 +52,8 @@ targetted by a [Rule](#app-api-create-rule):
 
 - [`issues.opened`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-18)
   - Happens when a new issue is created in a repository
+- [`issues.reopened`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-18)
+  - Happens when a new issue is reopened in a repository
 - [`issues.labeled`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-18)
   - Happens when a label is added to an issue
 
@@ -388,6 +390,7 @@ on:
     # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues
     types:
       - opened
+      - reopened
       - labeled
 
 jobs:

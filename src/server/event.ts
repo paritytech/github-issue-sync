@@ -27,7 +27,11 @@ const setupEvent = <E extends WebhookEvents>(
 }
 
 export const setupBotEvents = (ctx: Context) => {
-  for (const event of ["issues.opened", "issues.labeled"] as const) {
+  for (const event of [
+    "issues.opened",
+    "issues.labeled",
+    "issues.reopened",
+  ] as const) {
     setupEvent(ctx, event, async ({ logger }, event) => {
       const { payload } = event
 
