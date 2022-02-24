@@ -49,7 +49,7 @@ export const setupBotEvents = (ctx: Context) => {
         payload.installation?.id,
       )
 
-      const executor = new Executor({ logger })
+      const executor = new Executor({ logger, secretsToRedact: [] })
 
       toNextRule: for (const rule of rules) {
         try {
