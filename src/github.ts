@@ -9,6 +9,8 @@ import { delayMilliseconds } from "./utils"
 const rateLimitRemainingHeader = "x-ratelimit-remaining"
 const rateLimitResetHeader = "x-ratelimit-reset"
 const retryAfterHeader = "retry-after"
+
+export const extendedByApplication = Symbol()
 export const getOctokit = (
   octokit: Octokit,
   getAuthHeaders: () => Promise<{ authorization: string }>,
@@ -17,7 +19,7 @@ export const getOctokit = (
   // Check that this Octokit instance has not been augmented before because
   // side-effects of this function should not be stacked; e.g. registering
   // request wrappers more than once will break the application
-  if ((octokit as ExtendedOctokit).extendedByApplication) {
+  if ((octokit as ExtendedOctokit)[extendedByApplication] === true) {
     return octokit as ExtendedOctokit
   }
 
@@ -121,6 +123,6 @@ export const getOctokit = (
   })
 
   const extendedOctokit = octokit as ExtendedOctokit
-  extendedOctokit.extendedByApplication = true
+  extendedOctokit[extendedByApplication] = true
   return extendedOctokit
 }

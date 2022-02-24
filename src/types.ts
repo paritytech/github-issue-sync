@@ -1,10 +1,12 @@
 import { Octokit } from "@octokit/core"
 
+import type { extendedByApplication } from "src/github"
+
 export type Issue = {
   nodeId: string
 }
 
-export type ExtendedOctokit = Octokit & { extendedByApplication: true }
+export type ExtendedOctokit = Octokit & { [extendedByApplication]: true }
 
 type KeysOfType<T, U> = { [K in keyof T]: T[K] extends U ? K : never }[keyof T]
 type RequiredKeys<T> = Exclude<
