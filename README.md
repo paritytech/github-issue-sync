@@ -22,6 +22,8 @@ It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
   - [Development](#app-development)
     - [Local setup](#app-development-local-setup)
     - [Database migrations](#app-development-database-migrations)
+  - [Deployment](#app-deployment)
+    - [Manual deployment](#app-manual-deployment)
   - [Dependencies](#app-dependencies)
   - [Settings](#app-settings)
   - [Configuration](#app-configuration)
@@ -39,7 +41,8 @@ It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
 
 A GitHub App is ran **as a service** by executing the main entrypoint; consult
 the [Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
-server.
+server or the [docker-compose.yml](./docker-compose.yml) file for all the
+components.
 
 The application is composed of
 
@@ -269,6 +272,17 @@ their files names is `${TIMESTAMP}_${TITLE}.ts`.
 Check the
 [official documentation](https://github.com/salsita/node-pg-migrate/blob/master/docs/cli.md)
 for more details.
+
+## Deployment <a name="app-deployment"></a>
+
+### Manual deployment <a name="app-manual-deployment"></a>
+
+The whole application can be spawned with `docker-compose up`.
+
+For ad-hoc deployments, for instance in a VM, one idea is to use the
+`docker-compose up` command in a `tmux` session. e.g.
+
+`tmux new -s github-issue-sync sh -c "docker-compose up 2>&1 | tee -a log.txt"`
 
 ## Dependencies <a name="app-dependencies"></a>
 
