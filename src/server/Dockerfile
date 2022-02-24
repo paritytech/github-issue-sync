@@ -1,7 +1,7 @@
 FROM node:16.14-alpine
 
 # This Dockerfile takes as context the root of the application
-# i.e. execute `docker build src/server/Dockerfile ...` from the project's root, not this directory
+# i.e. execute `docker build src/server ...` from the project's root, not this directory
 
 # jq is used for Filtered Rules' expressions at runtime
 RUN apk add jq
