@@ -1,8 +1,8 @@
 # Introduction
 
-This project implements allows for synchronizing GitHub Issues to a
+This project enables syncing GitHub Issues to a
 [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience).
-It can either be used as a [GitHub Action](#action) or a [GitHub App](#app).
+It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
 
 ## TOC
 
@@ -71,8 +71,8 @@ All API calls are protected by tokens which should be registered by the
 
 This endpoint is used to create a **Rule** for a given repository. A Rule
 specifies how issues for a repository are synced to a target project. Please
-check the type of `IssueToProjectFieldRuleCreationInput` in [the source
-types](./src/server/types.ts) for all the available fields.
+check the type of `IssueToProjectFieldRuleCreationInput` in
+[the source types](./src/server/types.ts) for all the available fields.
 
 #### Unfiltered Rule <a name="app-api-unfiltered-rule"></a>
 
@@ -94,14 +94,16 @@ curl \
 #### Filtered Rule <a name="app-api-filtered-rule"></a>
 
 Optionally it's possible to specify a
-[`jq` expression](https://stedolan.github.io/jq/manual/) (
-[the cookbook](https://github.com/stedolan/jq/wiki/Cookbook) might be helpful)
+[`jq` expression](https://stedolan.github.io/jq/manual/)
+([the cookbook](https://github.com/stedolan/jq/wiki/Cookbook) might be helpful)
 in the `"filter"` field to be tested against the
 [`"issue"` object in the webhook's payload](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-example-when-someone-edits-an-issue).
-The rule will only be triggered if its `"filter"` outputs a non-empty string.
 
-For example, if you want the rule to be triggered **only** for issues which have
-an "epic" label, define the filter as follows:
+If a "`filter`" is defined, the rule will only be triggered if its `"filter"`
+outputs a non-empty string.
+
+For example, if you want the rule to be triggered only for issues which have an
+"epic" label, define the filter as follows:
 
 ```
 curl \
@@ -202,10 +204,10 @@ curl \
 `POST /api/v1/token`
 
 This API will respond with the newly-created token which later
-[can be deleted](#delete-token).
+[can be deleted](#app-api-delete-token).
 
-Note that [`$API_CONTROL_TOKEN`](#configuration) should be used as a token here
-since normal tokens are not able to create other tokens.
+Note that [`$API_CONTROL_TOKEN`](#app-configuration) should be used as a token
+here since normal tokens are not able to create other tokens.
 
 ```
 curl \
@@ -235,7 +237,7 @@ curl \
    - https://probot.github.io/docs/development/
 2. [Set the appropriate permissions on the GitHub App](#app-settings)
 3. Install the GitHub App in a repository by clicking the "Install" button
-   on the settings page of your app (`https://github.com/apps/your-app`)
+   on the settings page of your app (`https://github.com/apps/${app}`)
 4. Copy [src/server/.env.example.cjs](./src/server/.env.example.cjs) to
   `src/server/.env.cjs` and edit it according to the instructions in the file
 5. Run `yarn` to install the dependencies
@@ -277,7 +279,7 @@ for more details.
 
 ## Settings <a name="app-settings"></a>
 
-The settings' configuration can be done at
+The permissions and event subscriptions can be configured at
 `https://github.com/settings/apps/${app}/permissions`
 
 ### Repository permissions
@@ -318,7 +320,7 @@ Since the build output consists of plain .js files, which can be executed
 directly by Node.js, it _could_ be ran directly without packaging first; we
 regardless prefer to use `ncc` because it bundles all the code, including the
 dependencies' code, into a single file ahead-of-time, meaning the workflow can
-promptly start the action without having to install dependencies for every run.
+promptly start the action without having to install dependencies on every run.
 
 ### Build steps <a name="action-build-steps"></a>
 
