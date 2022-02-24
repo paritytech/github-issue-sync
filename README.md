@@ -41,8 +41,7 @@ It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
 
 A GitHub App is ran **as a service** by executing the main entrypoint; consult
 the [Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
-server or the [docker-compose.yml](./docker-compose.yml) file for all the
-components.
+server or [docker-compose.yml](./docker-compose.yml) for the whole application.
 
 The application is composed of
 
@@ -243,7 +242,7 @@ curl \
 3. Install the GitHub App in a repository by clicking the "Install" button
    on the settings page of your app (`https://github.com/apps/${app}`)
 4. Copy [src/server/.env.example.cjs](./src/server/.env.example.cjs) to
-  `src/server/.env.cjs` and edit it according to the instructions in the file
+  `src/server/.env.cjs` and edit it according its instructions
 5. Run `yarn` to install the dependencies
 6. Start the Postgres instance
   - <a name="database-container"></a> Through `docker`: take the
