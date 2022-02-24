@@ -39,11 +39,11 @@ export const setupBotEvents = (ctx: Context) => {
         const { rows }: { rows: IssueToProjectFieldRule[] } =
           await client.query(
             `
-          SELECT * FROM ${table.issue_to_project_field_rule}
-          WHERE
-            github_owner = $1 AND
-            github_name = $2
-          `,
+            SELECT * FROM ${table.issue_to_project_field_rule}
+            WHERE
+              github_owner = $1 AND
+              github_name = $2
+            `,
             [payload.repository.owner.login, payload.repository.name],
           )
         return rows
