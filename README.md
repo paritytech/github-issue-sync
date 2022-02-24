@@ -74,6 +74,10 @@ specifies how issues for a repository are synced to a target project. Please
 check the type of `IssueToProjectFieldRuleCreationInput` in
 [the source types](./src/server/types.ts) for all the available fields.
 
+Keep track of the returned ID in case you want to
+[update the rule later](#app-api-update-rule); regardless, all IDs can be
+retrieved at any point by using the [listing endpoint](#app-api-list-rules).
+
 #### Unfiltered Rule <a name="app-api-unfiltered-rule"></a>
 
 If a Rule is specified with no filter, **any** issue associated with the
@@ -99,11 +103,9 @@ Optionally it's possible to specify a
 in the `"filter"` field to be tested against the
 [`"issue"` object in the webhook's payload](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-example-when-someone-edits-an-issue).
 
-If a "`filter`" is defined, the rule will only be triggered if its `"filter"`
-outputs a non-empty string.
-
-For example, if you want the rule to be triggered only for issues which have an
-"epic" label, define the filter as follows:
+If a filter is defined, the rule will only be triggered if its filter outputs a
+non-empty string. For example, if you want the rule to be triggered only for
+issues which have an "epic" label, define the filter as follows:
 
 ```
 curl \
@@ -128,10 +130,9 @@ matched. You can verify this locally:
 
 `PATCH /api/v1/rule/:id`
 
-This endpoint is parameterized by a Rule ID (which
-[was already created before](#app-api-create-rule)). As the name implies, it
-updates an existing rule using the request's JSON payload. Please check the type
-of `IssueToProjectFieldRuleUpdateInput` in
+This endpoint is parameterized by a Rule ID. As the name implies, it updates an
+existing rule using the request's JSON payload. Please check the type of
+`IssueToProjectFieldRuleUpdateInput` in
 [the source types](./src/server/types.ts) for all the available fields.
 
 Example: Update the filter for an existing rule whose `id` is "123"
