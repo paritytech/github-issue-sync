@@ -15,6 +15,12 @@ import {
 import { setupBotEvents } from "./event"
 import { Context } from "./types"
 
+const setupHealthRoute = function (server: Server) {
+  server.expressApp.get("/health", (_, response) => {
+    response.status(200).send()
+  })
+}
+
 export const setup = (
   bot: Probot,
   server: Server,
@@ -76,4 +82,5 @@ export const setup = (
 
   setupBotEvents(ctx)
   setupApi(ctx, server, conf.api)
+  setupHealthRoute(server)
 }
