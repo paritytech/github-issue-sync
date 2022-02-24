@@ -21,5 +21,11 @@ services:
     # command: ["-c", "yarn migrations:build && yarn migrations:up && yarn dev"]
   db:
     image: docker.io/bitnami/postgresql:11-debian-10
+    volumes:
+      - db-data:/bitnami/postgresql
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
+
+volumes:
+  db-data:
+    driver: local
