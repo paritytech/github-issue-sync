@@ -133,43 +133,30 @@ export const withDatabaseClientForDynamicQueryCallback = <T>(
       return value
     })
 
-    let result: T | Error
-    try {
-      result = await withDatabaseClientCallback<T, WrapForDynamicQueryContext>(
-        pool,
-        logger,
-        (client) => {
-          const updateStatementParamsJoined = queryParams
-            .reduce((acc, { placeholder, column }) => {
-              return `${acc}, ${client.escapeIdentifier(
-                column,
-              )} = ${placeholder}`
-            }, "")
-            .slice(1)
-            .trim()
-          const columnsJoined = columns
-            .reduce((acc, v) => {
-              return `${acc}, ${client.escapeIdentifier(v)}`
-            }, "")
-            .slice(1)
-            .trim()
-          return {
-            paramsPlaceholdersJoined,
-            updateStatementParamsJoined,
-            values,
-            columnsJoined,
-            queryParams,
-          }
-        },
-      )(fn)
-    } catch (error) {
-      result = error
-    }
-
-    if (result instanceof Error) {
-      throw result
-    }
-
-    return result
+    return await withDatabaseClientCallback<T, WrapForDynamicQueryContext>(
+      pool,
+      logger,
+      (client) => {
+        const updateStatementParamsJoined = queryParams
+          .reduce((acc, { placeholder, column }) => {
+            return `${acc}, ${client.escapeIdentifier(column)} = ${placeholder}`
+          }, "")
+          .slice(1)
+          .trim()
+        const columnsJoined = columns
+          .reduce((acc, v) => {
+            return `${acc}, ${client.escapeIdentifier(v)}`
+          }, "")
+          .slice(1)
+          .trim()
+        return {
+          paramsPlaceholdersJoined,
+          updateStatementParamsJoined,
+          values,
+          columnsJoined,
+          queryParams,
+        }
+      },
+    )(fn)
   }
 }
