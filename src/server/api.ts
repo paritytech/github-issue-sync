@@ -36,10 +36,7 @@ const routes = (() => {
 })()
 
 const requestParamValidators = {
-  [routes.token.root]: Joi.object<{
-    description: string
-  }>().keys({ description: Joi.string().required() }),
-
+  [routes.token.root]: undefined,
   [routes.issueToProjectField.root]: undefined,
   [routes.issueToProjectField.byId]: Joi.object<{
     id: string
