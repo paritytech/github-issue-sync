@@ -135,7 +135,7 @@ existing rule using the request's JSON payload. Please check the type of
 `IssueToProjectFieldRuleUpdateInput` in
 [the source types](./src/server/types.ts) for all the available fields.
 
-Example: Update the filter for an existing rule whose `id` is "123"
+Example: Update the filter for an existing rule whose ID is `123`
 
 ```
 curl \
