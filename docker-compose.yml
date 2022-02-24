@@ -1,0 +1,22 @@
+version: "3"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: src/server/Dockerfile
+      args:
+        - PORT
+    depends_on:
+      - db
+    ports:
+      - $PORT:3000
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: null
+      DB_NAME: postgres
+      PORT: $PORT
+  db:
+    image: docker.io/bitnami/postgresql:11-debian-10
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
