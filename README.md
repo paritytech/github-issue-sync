@@ -244,9 +244,10 @@ curl \
 5. Run `yarn` to install the dependencies
 6. Start the Postgres instance
   - <a name="database-container"></a> Through `docker`: take the
-    DB_PASSWORD and DB_USER from `.env.cjs` and run
+    DB_PASSWORD and DB_USER from `src/server/.env.cjs` and run
     `docker run --rm -e POSTGRES_PASSWORD=$DB_PASSWORD -e POSTGRES_USER=$DB_USER postgres`
-  - For a local instance, make sure the configuration in `.env.cjs` is correct
+  - For a local instance, make sure the configuration in `src/server/.env.cjs`
+    is correct
 7. [Apply all database migrations](#apply-migrations)
 8. Run `yarn dev` to start a development server or `yarn watch` for a
    development server which automatically restarts when you make changes to the
