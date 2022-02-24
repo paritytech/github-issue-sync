@@ -1,0 +1,10 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../build/migrations",
+    // Compile migrations to commonjs because their modules are imported
+    // through "require"
+    "module": "commonjs"
+  },
+  "include": ["../../../src/server/migrations"]
+}

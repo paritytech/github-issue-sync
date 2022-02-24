@@ -19,4 +19,4 @@ inputs:
     type: string
 runs:
   using: node16
-  main: dist/index.js
+  main: dist/action/index.js

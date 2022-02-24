@@ -4,7 +4,7 @@ import Joi from "joi"
 
 import { Issue } from "./types"
 
-export const syncIssue = async function ({
+export const syncIssue = async ({
   issue,
   graphql: gql,
   project,
@@ -14,7 +14,7 @@ export const syncIssue = async function ({
   graphql: typeof OctokitGraphQL
   project: { number: number; targetField: string; targetValue: string }
   organization: string
-}) {
+}) => {
   /*
 
     Step: Fetch the project's data so that we'll be able to create an item on it
@@ -60,7 +60,7 @@ export const syncIssue = async function ({
 
   */
   const targetField = projectData.organization.projectNext.fields.nodes.find(
-    function ({ name }) {
+    ({ name }) => {
       return name === project.targetField
     },
   )
@@ -90,7 +90,7 @@ export const syncIssue = async function ({
     target field
 
   */
-  const targetValue = settings.options.find(function ({ name }) {
+  const targetValue = settings.options.find(({ name }) => {
     return name === project.targetValue
   })
   assert(

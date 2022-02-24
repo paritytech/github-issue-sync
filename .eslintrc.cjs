@@ -56,8 +56,8 @@ const baseRules = {
         "CallExpression[arguments.length=1] > MemberExpression.callee > Identifier.property[name='reduce']",
       message: "Provide initialValue to .reduce()",
     },
-    "ArrowFunctionExpression",
   ],
+  "prefer-arrow-callback": "error",
   "no-constant-condition": "off",
   "require-atomic-updates": "off",
   "use-isnan": "error",
@@ -86,6 +86,11 @@ const typescriptRules = {
   "@typescript-eslint/restrict-template-expressions": "error",
 }
 
+const typescriptParserOptions = {
+  project: "./tsconfig.json",
+  tsconfigRootDir: __dirname,
+}
+
 module.exports = {
   env: { node: true },
   root: true,
@@ -103,8 +108,17 @@ module.exports = {
   overrides: [
     {
       files: ["*.{ts,tsx}"],
-      parserOptions: { project: "./tsconfig.json", tsconfigRootDir: __dirname },
+      parserOptions: typescriptParserOptions,
       rules: { ...baseRules, ...typescriptRules },
+    },
+    {
+      files: ["templates/*.{ts,tsx}"],
+      parserOptions: typescriptParserOptions,
+      rules: {
+        ...baseRules,
+        ...typescriptRules,
+        "unused-imports/no-unused-vars-ts": "off",
+      },
     },
   ],
 }
