@@ -13,9 +13,12 @@ services:
     environment:
       DB_HOST: db
       DB_USER: postgres
-      DB_PASSWORD: null
       DB_NAME: postgres
+      DB_PASSWORD: null
       PORT: $PORT
+    # uncomment the following for testing the development commands
+    # entrypoint: sh
+    # command: ["-c", "yarn migrations:build && yarn migrations:up && yarn dev"]
   db:
     image: docker.io/bitnami/postgresql:11-debian-10
     environment:
