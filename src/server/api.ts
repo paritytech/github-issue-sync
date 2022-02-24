@@ -409,7 +409,7 @@ export const setupApi = (
         },
       )
 
-      ok(rowCount ? 201 : 404, rows[0])
+      ok(rowCount ? 200 : 404, rows[0])
     },
   )
 
