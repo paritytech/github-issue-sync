@@ -20,8 +20,8 @@ const setupEvent = <E extends WebhookEvents>(
   const { bot, logger } = ctx
   bot.on(eventName, async (event) => {
     const eventLogger = logger.child({ eventId: event.id, eventName })
-    const { octokit: _, log: __, ...relevantEventForLogging } = event
-    eventLogger.info(relevantEventForLogging, "Received payload")
+    const { octokit: _, log: __, ...relevantEventPartsForLogging } = event
+    eventLogger.info(relevantEventPartsForLogging, "Received payload")
     await handler({ ...ctx, logger: eventLogger }, event)
   })
 }
