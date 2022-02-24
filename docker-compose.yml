@@ -9,13 +9,13 @@ services:
     depends_on:
       - db
     ports:
-      - $PORT:3000
+      - ${PORT:-3000}:3000
     environment:
       DB_HOST: db
       DB_USER: postgres
       DB_NAME: postgres
       DB_PASSWORD: null
-      PORT: $PORT
+      PORT: ${PORT:-3000}
     # uncomment the following for testing the development commands
     # entrypoint: sh
     # command: ["-c", "yarn migrations:build && yarn migrations:up && yarn dev"]
