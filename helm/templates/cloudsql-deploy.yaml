@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudsql
+  labels:
+    app.kubernetes.io/name: gitspiegel
+    app.kubernetes.io/component: cloudsql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitspiegel
+      app.kubernetes.io/component: cloudsql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitspiegel
+        app.kubernetes.io/component: cloudsql
+    spec:
+      serviceAccountName: {{ include "gitspiegel.serviceAccountName" . }}
+      containers:
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.28.1
+        imagePullPolicy: IfNotPresent
+        command:
+        - "/cloud_sql_proxy"
+        - {{ $.Values.cloudsql.commandline.args | quote }}
+        ports:
+          - name: tcp
+            containerPort: 5432
+            protocol: TCP
+        livenessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 5
+          periodSeconds: 10
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{- toYaml . | nindent 8 }}
+{{- end }}

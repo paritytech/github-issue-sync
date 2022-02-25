@@ -1,0 +1,28 @@
+serviceAccount:
+  create: true
+  annotations:
+    iam.gke.io/gcp-service-account: 'gitspiegel@parity-stg.iam.gserviceaccount.com'
+  name: "gitspiegel"
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-http01
+    external-dns.alpha.kubernetes.io/target: traefik-external.parity-stg.parity.io.
+    kubernetes.io/ingress.class: traefik-external
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  hosts:
+    - host: gitspiegel.parity-stg.parity.io
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: gitspiegel.parity-stg.parity.io
+      hosts:
+        - gitspiegel.parity-stg.parity.io
+
+cloudsql:
+  commandline:
+    args: "-instances=parity-stg:europe-west3:gitspiegel-pgsql=tcp:0.0.0.0:5432"
