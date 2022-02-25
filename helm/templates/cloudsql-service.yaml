@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.cloudsql.service.name }}
   labels:
     app: {{ .Values.cloudsql.service.name }}
-    {{- include "gitspiegel.labels" . | nindent 4 }}
+    {{- include "github-issue-sync.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -12,5 +12,5 @@ spec:
       targetPort: {{ .Values.cloudsql.service.targetPort }}
       protocol: TCP
   selector:
-    {{- include "gitspiegel.selectorLabels" . | nindent 4 }}
+    {{- include "github-issue-sync.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: {{ .Values.cloudsql.service.name }}

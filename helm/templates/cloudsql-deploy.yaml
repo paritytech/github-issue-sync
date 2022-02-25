@@ -3,21 +3,21 @@ kind: Deployment
 metadata:
   name: cloudsql
   labels:
-    app.kubernetes.io/name: gitspiegel
+    app.kubernetes.io/name: github-issue-sync
     app.kubernetes.io/component: cloudsql
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: gitspiegel
+      app.kubernetes.io/name: github-issue-sync
       app.kubernetes.io/component: cloudsql
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: gitspiegel
+        app.kubernetes.io/name: github-issue-sync
         app.kubernetes.io/component: cloudsql
     spec:
-      serviceAccountName: {{ include "gitspiegel.serviceAccountName" . }}
+      serviceAccountName: {{ include "github-issue-sync.serviceAccountName" . }}
       containers:
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.28.1

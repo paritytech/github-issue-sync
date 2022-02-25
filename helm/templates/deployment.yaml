@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "gitspiegel.fullname" . }}
+  name: {{ include "github-issue-sync.fullname" . }}
   labels:
-    {{- include "gitspiegel.labels" . | nindent 4 }}
+    {{- include "github-issue-sync.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "gitspiegel.selectorLabels" . | nindent 6 }}
+      {{- include "github-issue-sync.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "gitspiegel.selectorLabels" . | nindent 8 }}
+        {{- include "github-issue-sync.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "gitspiegel.serviceAccountName" . }}
+      serviceAccountName: {{ include "github-issue-sync.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:

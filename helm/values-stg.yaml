@@ -1,8 +1,8 @@
 serviceAccount:
   create: true
   annotations:
-    iam.gke.io/gcp-service-account: 'gitspiegel@parity-stg.iam.gserviceaccount.com'
-  name: "gitspiegel"
+    iam.gke.io/gcp-service-account: 'github-issue-sync@parity-stg.iam.gserviceaccount.com'
+  name: "github-issue-sync"
 
 ingress:
   enabled: true
@@ -14,15 +14,15 @@ ingress:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
   hosts:
-    - host: gitspiegel.parity-stg.parity.io
+    - host: github-issue-sync.parity-stg.parity.io
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
-    - secretName: gitspiegel.parity-stg.parity.io
+    - secretName: github-issue-sync.parity-stg.parity.io
       hosts:
-        - gitspiegel.parity-stg.parity.io
+        - github-issue-sync.parity-stg.parity.io
 
 cloudsql:
   commandline:
-    args: "-instances=parity-stg:europe-west3:gitspiegel-pgsql=tcp:0.0.0.0:5432"
+    args: "-instances=parity-stg:europe-west3:github-issue-sync-pgsql=tcp:0.0.0.0:5432"

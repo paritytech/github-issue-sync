@@ -1,11 +1,11 @@
-# Default values for gitspiegel.
+# Default values for github-issue-sync.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  repository: paritytech/gitspiegel
+  repository: paritytech/github-issue-sync
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "v-0.0.1"

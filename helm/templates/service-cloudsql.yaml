@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ .Values.cloudsql.service.name }}
   labels:
-    app.kubernetes.io/name: gitspiegel
+    app.kubernetes.io/name: github-issue-sync
     app.kubernetes.io/component: cloudsql
 spec:
   type: ClusterIP
@@ -12,5 +12,5 @@ spec:
       targetPort: {{ .Values.cloudsql.service.targetPort }}
       protocol: TCP
   selector:
-    app.kubernetes.io/name: gitspiegel
+    app.kubernetes.io/name: github-issue-sync
     app.kubernetes.io/component: cloudsql
