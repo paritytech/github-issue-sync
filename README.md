@@ -4,6 +4,9 @@ This project enables syncing GitHub Issues to a
 [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience).
 It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
 
+Before starting to work on this project, we recommend reading the
+[Implementation section](#implementation).
+
 ## TOC
 
 - [GitHub App](#app)
@@ -20,11 +23,11 @@ It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
     - [Create a token](#app-api-create-token)
     - [Delete a token](#app-api-delete-token)
   - [Development](#app-development)
-    - [Local setup](#app-development-local-setup)
+    - [Dependencies](#app-development-dependencies)
+    - [Setup](#app-development-setup)
     - [Database migrations](#app-development-database-migrations)
   - [Deployment](#app-deployment)
     - [Manual deployment](#app-manual-deployment)
-  - [Dependencies](#app-dependencies)
   - [Settings](#app-settings)
   - [Configuration](#app-configuration)
 - [GitHub Action](#action)
@@ -36,6 +39,7 @@ It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
     - [Release steps](#action-release-steps)
   - [Workflow configuration](#action-workflow-configuration)
   - [Install](#action-install)
+- [Implementation](#app-implementation)
 
 # GitHub App <a name="app"></a>
 
@@ -233,23 +237,49 @@ curl \
 
 ## Development <a name="app-development"></a>
 
-### Local setup <a name="app-development-local-setup"></a>
+### Dependencies <a name="app-development-dependencies"></a>
+
+- `Node.js` for running the application
+- `yarn` for installing packages and starting scripts
+- `jq` for the filtering expressions on [Rules](#app-api-create-rule)
+- `postgres` for the database
+
+    It might be easier to
+    [run the database in a container](#development-setup-db-docker) rather than
+    having to install and run a postgres service directly in your operating
+    system
+
+### Setup <a name="app-development-setup"></a>
 
 1. [Register a GitHub App](https://probot.github.io/docs/deployment/#register-the-github-app)
    - https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app
    - https://probot.github.io/docs/development/
 2. [Set the appropriate permissions on the GitHub App](#app-settings)
 3. Install the GitHub App in a repository by clicking the "Install" button
-   on the settings page of your app (`https://github.com/apps/${app}`)
+   on the settings page of your app (`https://github.com/apps/${APP}`)
 4. Copy [src/server/.env.example.cjs](./src/server/.env.example.cjs) to
   `src/server/.env.cjs` and edit it according its instructions
 5. Run `yarn` to install the dependencies
 6. Start the Postgres instance
-  - <a name="database-container"></a> Through `docker`: take the
-    DB_PASSWORD and DB_USER from `src/server/.env.cjs` and run
-    `docker run --rm -e POSTGRES_PASSWORD=$DB_PASSWORD -e POSTGRES_USER=$DB_USER postgres`
-  - For a local instance, make sure the configuration in `src/server/.env.cjs`
-    is correct
+
+    To use an existing postgres instance, such as one running in your operating
+    system, you just need to check if the variables from `src/server/.env.cjs`
+    are correct.
+
+    <a name="development-setup-db-docker"></a>
+    You can also create a new postgres instance with `docker` (use the variables
+    from `src/server/.env.cjs`):
+
+    ```sh
+    # replace $DATA with some persistent directory
+    docker run \
+      -v $DATA:/var/lib/postgresql/data \
+      -e "POSTGRES_USER=$DB_USER" \
+      -e "POSTGRES_PASSWORD=$DB_PASSWORD" \
+      -p 5432:5432 \
+      postgres
+    ```
+
 7. [Apply all database migrations](#apply-migrations)
 8. Run `yarn dev` to start a development server or `yarn watch` for a
    development server which automatically restarts when you make changes to the
@@ -282,15 +312,6 @@ For ad-hoc deployments, for instance in a VM, one idea is to use the
 `docker-compose up` command in a `tmux` session. e.g.
 
 `tmux new -s github-issue-sync sh -c "docker-compose up 2>&1 | tee -a log.txt"`
-
-## Dependencies <a name="app-dependencies"></a>
-
-- `Node.js` for running the application
-- `yarn` for installing packages and starting scripts
-- `jq` for the filtering expressions on [Rules](#app-api-create-rule)
-- `postgres` for the database
-  - For local development we recommend
-    [running a Postgres instance through `docker`](#database-container)
 
 ## Settings <a name="app-settings"></a>
 
@@ -439,3 +460,15 @@ jobs:
 Having [released](#action-release) the code, the final step is to copy the [workflow
 configuration](#action-workflow-configuration) to the `.github/workflows` folder of
 projects whose issues need to be synced.
+
+# Implementation <a name="implementation"></a>
+
+The [sync](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/core.ts#L7) is triggered from:
+
+- [Webhook events](https://probot.github.io/docs/webhooks/) in
+  [event handlers](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/event.ts#L35)
+  for the [GitHub App](#github-app)
+  - The event listeners are set up in
+    [`main`](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/main.ts#L97)
+- [CLI entrypoint](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/action/main.ts#L33)
+  for the [GitHub Action](#github-acttion)
