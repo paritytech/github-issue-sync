@@ -50,6 +50,7 @@ export const setupBotEvents = (ctx: Context) => {
       })
 
       const octokit = ctx.github.getInstallationOctokit(
+        logger,
         payload.installation?.id,
       )
 

@@ -1,3 +1,5 @@
+import { inspect } from "util"
+
 enum LoggingLevel {
   debug,
   info,
@@ -7,6 +9,88 @@ enum LoggingLevel {
 type LoggingLevels = keyof typeof LoggingLevel
 
 export type LogFormat = "json" | "none"
+
+const setFormattedKeyValue = function (
+  source: any,
+  output: any,
+  key: any,
+  previousObjects: unknown[],
+) {
+  if (previousObjects.indexOf(source[key]) !== -1) {
+    return "[Circular]"
+  }
+
+  const value = formatValue(source[key], previousObjects)
+  if (value === undefined) {
+    return
+  }
+
+  output[key] = value
+}
+
+const formatValue = function (value: unknown, previousObjects: unknown[] = []) {
+  if (value === undefined) {
+    return value
+  }
+
+  switch (typeof value) {
+    case "boolean":
+    case "number":
+    case "string": {
+      return value
+    }
+    case "symbol": {
+      return value.toString()
+    }
+    case "object": {
+      if (value === null) {
+        return
+      }
+
+      previousObjects = previousObjects.concat([value])
+
+      const isArray = Array.isArray(value)
+      const isIterable = !isArray && Symbol.iterator in value
+      const objAsArray = isArray
+        ? value
+        : isIterable
+        ? Array.from(value as Iterable<unknown>)
+        : undefined
+
+      if (objAsArray === undefined && !(value instanceof Error)) {
+        const asString =
+          typeof value.toString === "function" && value.toString.length === 0
+            ? value.toString()
+            : undefined
+        if (typeof asString === "string" && asString !== "[object Object]") {
+          return asString
+        }
+      }
+
+      const { container, output } = (() => {
+        if (isIterable) {
+          const iteratorContainer = { type: value.constructor.name, items: [] }
+          return {
+            container: iteratorContainer,
+            output: iteratorContainer.items,
+          }
+        }
+
+        const output = objAsArray === undefined ? {} : []
+        return { container: output, output }
+      })()
+
+      const sourceObj = objAsArray ?? value
+      for (const key of Object.getOwnPropertyNames(sourceObj)) {
+        setFormattedKeyValue(sourceObj, output, key, previousObjects)
+      }
+
+      if (Object.keys(output).length > 0) {
+        return container
+      }
+    }
+  }
+}
 
 export class Logger {
   constructor(
@@ -25,38 +109,22 @@ export class Logger {
     })
   }
 
-  private log(level: LoggingLevels, item: any, message?: string) {
+  private log(level: LoggingLevels, item: any, description?: string) {
     if (LoggingLevel[level] < LoggingLevel[this.options.minLogLevel]) {
       return
     }
 
     switch (this.options.logFormat) {
       case "json": {
-        const base = {
-          level,
-          name: this.options.name,
-          context:
-            this.options.context === undefined
-              ? message
-              : { ...this.options.context, description: message },
-        }
-
-        // This structure is aligned with Probot's pino output format for JSON
-        const logEntry: {
-          level: string
-          name: string
-          msg: string
-          stack?: string
-          context?: any
-        } = (() => {
-          if (item instanceof Error) {
-            return { ...base, stack: item.stack, msg: item.toString() }
-          } else {
-            return { ...base, msg: item }
-          }
-        })()
-
-        console.log(JSON.stringify(logEntry))
+        console.log(
+          JSON.stringify({
+            level,
+            name: this.options.name,
+            msg: item,
+            description,
+            context: this.options.context,
+          }),
+        )
         break
       }
       default: {
@@ -65,11 +133,16 @@ export class Logger {
         fn(
           tag,
           ...[
-            ...(message ? [message] : []),
+            ...(description ? [description] : []),
             ...(this.options.context === undefined
               ? []
-              : [JSON.stringify(this.options.context)]),
-            item,
+              : [
+                  inspect(formatValue(this.options.context), {
+                    depth: null,
+                    colors: true,
+                  }),
+                ]),
+            inspect(formatValue(item), { depth: null, colors: true }),
           ],
         )
         break

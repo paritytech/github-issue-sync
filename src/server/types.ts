@@ -12,6 +12,7 @@ export type Context = {
   bot: Probot
   github: {
     getInstallationOctokit: (
+      logger: Logger,
       installationId: number | undefined,
     ) => ExtendedOctokit
   }
