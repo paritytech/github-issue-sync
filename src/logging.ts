@@ -109,38 +109,22 @@ export class Logger {
     })
   }
 
-  private log(level: LoggingLevels, item: any, message?: string) {
+  private log(level: LoggingLevels, item: any, description?: string) {
     if (LoggingLevel[level] < LoggingLevel[this.options.minLogLevel]) {
       return
     }
 
     switch (this.options.logFormat) {
       case "json": {
-        const base = {
-          level,
-          name: this.options.name,
-          context:
-            this.options.context === undefined
-              ? message
-              : { ...this.options.context, description: message },
-        }
-
-        // This structure is aligned with Probot's pino output format for JSON
-        const logEntry: {
-          level: string
-          name: string
-          msg: string
-          stack?: string
-          context?: any
-        } = (() => {
-          if (item instanceof Error) {
-            return { ...base, stack: item.stack, msg: item.toString() }
-          } else {
-            return { ...base, msg: item }
-          }
-        })()
-
-        console.log(JSON.stringify(logEntry))
+        console.log(
+          JSON.stringify({
+            level,
+            name: this.options.name,
+            msg: item,
+            description,
+            context: this.options.context,
+          }),
+        )
         break
       }
       default: {
@@ -149,7 +133,7 @@ export class Logger {
         fn(
           tag,
           ...[
-            ...(message ? [message] : []),
+            ...(description ? [description] : []),
             ...(this.options.context === undefined
               ? []
               : [

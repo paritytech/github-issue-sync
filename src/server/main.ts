@@ -1,6 +1,7 @@
 import { Logger as ProbotLogger, Probot, Server } from "probot"
 import { getLog } from "probot/lib/helpers/get-log"
 
+import { Logger } from "src/logging"
 import { envNumberVar, envVar } from "src/utils"
 
 import { setup } from "./setup"
@@ -22,6 +23,8 @@ const main = async () => {
       }
     }
   })()
+
+  const logger = new Logger({ logFormat, name: "app", minLogLevel: "debug" })
 
   let isTerminating = false
   for (const event of ["uncaughtException", "unhandledRejection"]) {
@@ -66,8 +69,8 @@ const main = async () => {
   switch (logFormat) {
     case "json": {
       probotLogger = getLog({
-        level: "error",
-        logFormat: "json",
+        logFormat,
+        level: "info",
         logLevelInString: true,
         logMessageKey: "msg",
       })
@@ -102,7 +105,7 @@ const main = async () => {
   })
 
   await server.start()
-  server.log.info("Probot has started!")
+  logger.info("Probot has started!")
 }
 
 void main()
