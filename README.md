@@ -295,9 +295,9 @@ GitHub App, install it in a repository through
 ### Environment variables <a name="app-setup-environment-variables"></a>
 
 All environment variables are documented in the
-[.env.example.cjs](./.env.example.cjs) file. For development you're welcome to
-copy that file to `.env.cjs` so that all values will be loaded automatically
-once the application starts.
+[src/server/.env.example.cjs](./src/server/.env.example.cjs) file. For
+development you're welcome to copy that file to `src/server.env.cjs` so that all
+values will be loaded automatically once the application starts.
 
 ## Development <a name="app-development"></a>
 
