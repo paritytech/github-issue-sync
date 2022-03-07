@@ -138,7 +138,7 @@ export const syncIssue = async ({
       $project: ID!
       $item: ID!
       $targetField: ID!
-      $targetFieldValue: ID!
+      $targetFieldValue: String!
     ) {
       updateProjectNextItemField(input: {
         projectId: $project
