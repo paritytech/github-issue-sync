@@ -9,7 +9,7 @@ Before starting to work on this project, we recommend reading the
 
 ## TOC
 
-- [GitHub App](#app)
+- [Application](#app)
   - [API](#app-api)
     - [Create a rule](#app-api-create-rule)
       - [Unfiltered Rule](#app-api-unfiltered-rule)
@@ -22,14 +22,18 @@ Before starting to work on this project, we recommend reading the
     - [Delete all rules for a specific repository](#app-api-delete-repository-rules)
     - [Create a token](#app-api-create-token)
     - [Delete a token](#app-api-delete-token)
+  - [GitHub App](#app-github-app)
+    - [Configuration](#app-github-app-configuration)
+    - [Installation](#app-github-app-installation)
+  - [Setup](#app-setup)
+    - [Requirements](#app-setup-requirements)
+    - [Environment variables](#app-setup-environment-variables)
   - [Development](#app-development)
-    - [Dependencies](#app-development-dependencies)
-    - [Setup](#app-development-setup)
+    - [Run the application](#app-development-run)
     - [Database migrations](#app-development-database-migrations)
   - [Deployment](#app-deployment)
-    - [Manual deployment](#app-manual-deployment)
-  - [Settings](#app-settings)
-  - [Configuration](#app-configuration)
+    - [Manual deployment](#app-deployment-manual)
+  - [Implementation](#implementation)
 - [GitHub Action](#action)
   - [Build](#action-build)
     - [Build steps](#action-build-steps)
@@ -41,13 +45,14 @@ Before starting to work on this project, we recommend reading the
   - [Install](#action-install)
 - [Implementation](#app-implementation)
 
-# GitHub App <a name="app"></a>
+# App <a name="app"></a>
 
-A GitHub App is ran **as a service** by executing the main entrypoint; consult
-the [Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
+The application (which impleents a [GitHub App](#app-github-app)) is ran **as a
+service** by executing the main entrypoint; consult the
+[Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
 server or [docker-compose.yml](./docker-compose.yml) for the whole application.
 
-The application is composed of
+It is composed of
 
 - A web server for receiving GitHub [Webhook events](#app-events) via HTTP POST
 - A database for storing [Rules](#app-api-create-rule)
@@ -235,57 +240,85 @@ curl \
   -X DELETE "http://github-issue-sync/api/v1/token"
 ```
 
-## Development <a name="app-development"></a>
+## GitHub App <a name="app-github-app"></a>
 
-### Dependencies <a name="app-development-dependencies"></a>
+The GitHub App is necessary for the application to receive
+[webhook events](https://probot.github.io/docs/webhooks) and
+access the GitHub API properly.
+
+Follow the instructions of
+<https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Bots/Development/Create-a-new-GitHub-App>
+for creating a new GitHub App.
+
+After creating the app, you should [configure](#app-github-app-configuration) and
+[install it](#app-github-app-installation) (make sure the
+[environment](#app-setup-environment-variables) is properly set up before using it).
+
+### Configuration <a name="app-github-app-configuration"></a>
+
+Configuration is done at `https://github.com/settings/apps/${APP}/permissions`.
+
+#### Repository permissions
+
+- Issues: Read-only
+  - Allows subscription to the "Issues" event
+
+#### Organization permissions
+
+- Projects: Read & write
+  - Allows for items to be created in
+    [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience)s.
+
+#### Events subscriptions
+
+- Issues
+  - Events used to trigger syncing for our primary use-case
+
+### Installation <a name="app-github-app-installation"></a>
+
+Having [created](#app-github-app) and [configured](#app-github-app-configuration) the
+GitHub App, install it in a repository through
+`https://github.com/settings/apps/${APP}/installations`.
+
+## Setup <a name="app-setup"></a>
+
+### Requirements <a name="app-setup-requirements"></a>
 
 - `Node.js` for running the application
 - `yarn` for installing packages and starting scripts
+  - If it's not already be bundled with Node.js, install with
+    `npm install -g yarn`
 - `jq` for the filtering expressions on [Rules](#app-api-create-rule)
 - `postgres` for the database
+    See <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Setup#postgres>
 
-    It might be easier to
-    [run the database in a container](#development-setup-db-docker) rather than
-    having to install and run a postgres service directly in your operating
-    system
+### Environment variables <a name="app-setup-environment-variables"></a>
 
-### Setup <a name="app-development-setup"></a>
+All environment variables are documented in the
+[.env.example.cjs](./.env.example.cjs) file. For development you're welcome to
+copy that file to `.env.cjs` so that all values will be loaded automatically
+once the application starts.
 
-1. [Register a GitHub App](https://probot.github.io/docs/deployment/#register-the-github-app)
-   - https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app
-   - https://probot.github.io/docs/development/
-2. [Set the appropriate permissions on the GitHub App](#app-settings)
-3. Install the GitHub App in a repository by clicking the "Install" button
-   on the settings page of your app (`https://github.com/apps/${APP}`)
-4. Copy [src/server/.env.example.cjs](./src/server/.env.example.cjs) to
-  `src/server/.env.cjs` and edit it according its instructions
-5. Run `yarn` to install the dependencies
-6. Start the Postgres instance
+## Development <a name="app-development"></a>
 
-    To use an existing postgres instance, such as one running in your operating
-    system, you just need to check if the variables from `src/server/.env.cjs`
-    are correct.
+### Run the application <a name="app-development-run"></a>
 
-    <a name="development-setup-db-docker"></a>
-    You can also create a new postgres instance with `docker` (use the variables
-    from `src/server/.env.cjs`):
-
-    ```sh
-    # replace $DATA with some persistent directory
-    docker run \
-      -v $DATA:/var/lib/postgresql/data \
-      -e "POSTGRES_USER=$DB_USER" \
-      -e "POSTGRES_PASSWORD=$DB_PASSWORD" \
-      -p 5432:5432 \
-      postgres
-    ```
-
-7. [Apply all database migrations](#apply-migrations)
-8. Run `yarn dev` to start a development server or `yarn watch` for a
-   development server which automatically restarts when you make changes to the
-   source files
-9. Trigger the relevant events in the GitHub repository where you've installed
-   the application (Step 3) and check if it works
+1. [Set up the GitHub App](#app-github-app)
+2. [Set up the application](#app-setup)
+    During development it's handy to use a [smee.io](https://smee.io/) proxy,
+    through the `WEBHOOK_PROXY_URL` environment variable, for receiving GitHub
+    Webhook Events in your local server instance.
+3. Start the Postgres instance
+    See
+    <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Setup#postgres>
+    (use the variables of `.env.cjs` for the database configuration)
+4. Run `yarn` to install the dependencies
+5. [Apply all database migrations](#app-apply-migrations)
+6. Run `yarn dev` to start a development server or `yarn watch` for a
+  development server which automatically restarts when you make changes to the
+  source files
+7. Trigger [events](#app-events) in the repositories where you've installed the
+  GitHub App (Step 2) and check if it works
 
 ### Database migrations <a name="app-development-database-migrations"></a>
 
@@ -294,7 +327,7 @@ Database migrations live in the [migrations directory](./src/server/migrations).
 Migrations are executed in ascending order by the file name. The format for
 their files names is `${TIMESTAMP}_${TITLE}.ts`.
 
-- Apply all pending migrations: `yarn migrations:up` <a name="apply-migrations"></a>
+- Apply all pending migrations: `yarn migrations:up` <a name="app-apply-migrations"></a>
 - Rollback a single migration: `yarn migrations:down`
 - Create a new migration: `yarn migrations:create [name]`
 
@@ -304,7 +337,11 @@ for more details.
 
 ## Deployment <a name="app-deployment"></a>
 
-### Manual deployment <a name="app-manual-deployment"></a>
+TODO: Replace with the deployment workflow instructions once the deployment is ready.
+
+TODO: Add links to Grafana logs once the deployment is ready.
+
+### Manual deployment <a name="app-deployment-manual"></a>
 
 The whole application can be spawned with `docker-compose up`.
 
@@ -312,32 +349,6 @@ For ad-hoc deployments, for instance in a VM, one idea is to use the
 `docker-compose up` command in a `tmux` session. e.g.
 
 `tmux new -s github-issue-sync sh -c "docker-compose up 2>&1 | tee -a log.txt"`
-
-## Settings <a name="app-settings"></a>
-
-The permissions and event subscriptions can be configured at
-`https://github.com/settings/apps/${app}/permissions`
-
-### Repository permissions
-
-- Issues: Read-only
-  - Allows subscription to the "Issues" event
-
-### Organization permissions
-
-- Projects: Read & write
-  - Allows for items to be created in
-    [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience)s.
-
-### Events subscriptions
-
-- Issues
-  - Events used to trigger syncing for our primary use-case
-
-## Configuration <a name="app-configuration"></a>
-
-Consult [.env.example.cjs](./src/server/.env.example.cjs) for the explanation on
-each environment variable relevant for this application.
 
 # GitHub Action <a name="action"></a>
 
@@ -467,7 +478,7 @@ The [sync](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e38
 
 - [Webhook events](https://probot.github.io/docs/webhooks/) in
   [event handlers](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/event.ts#L35)
-  for the [GitHub App](#github-app)
+  for the [app](#app)
   - The event listeners are set up in
     [`main`](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/main.ts#L97)
 - [CLI entrypoint](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/action/main.ts#L33)
