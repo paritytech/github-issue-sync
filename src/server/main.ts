@@ -24,7 +24,11 @@ const main = async () => {
     }
   })()
 
-  const logger = new Logger({ logFormat, name: "app", minLogLevel: "debug" })
+  const logger = new Logger({
+    logFormat,
+    name: "github-issue-sync",
+    minLogLevel: "debug",
+  })
 
   let isTerminating = false
   for (const event of ["uncaughtException", "unhandledRejection"]) {
@@ -97,7 +101,7 @@ const main = async () => {
     webhookProxy: process.env.WEBHOOK_PROXY_URL,
   })
   await server.load((bot: Probot) => {
-    return setup(bot, server, logFormat, {
+    return setup(logger, bot, server, logFormat, {
       database,
       github: { appId, clientId, clientSecret, privateKey },
       api: { controlToken: apiControlToken },
