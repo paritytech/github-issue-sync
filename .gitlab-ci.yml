@@ -78,8 +78,8 @@ variables:                         &default-vars
       - ./node_modules
   tags:
     - kubernetes-parity-build
-# fix
-.lint:
+
+lint:
   stage:                           lint
   <<:                              *kubernetes-env
   <<:                              *common-refs
@@ -87,16 +87,14 @@ variables:                         &default-vars
     - yarn
     - yarn lint
 
-# fix
-.test:
+test:
   stage:                           test
   <<:                              *kubernetes-env
   <<:                              *common-refs
   script:
     - yarn test
 
-# fix
-.security-scan:
+security-scan:
   stage:                           test
   <<:                              *kubernetes-env
   <<:                              *common-refs
@@ -112,7 +110,6 @@ variables:                         &default-vars
   image:                           quay.io/buildah/stable
   script:
     - export VERSION=${CI_COMMIT_SHORT_SHA}
-    - env | grep CI_PROJECT_NAME
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
         ( echo "no docker credentials provided"; exit 1 )
     - buildah bud
