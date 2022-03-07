@@ -45,7 +45,10 @@ export const setup = (
   })
 
   const appAuth = createAppAuth(conf.github)
-  const getInstallationOctokit = (installationId: number | undefined) => {
+  const getInstallationOctokit = (
+    logger: Logger,
+    installationId: number | undefined,
+  ) => {
     return getOctokit(
       new Octokit(),
       async () => {
