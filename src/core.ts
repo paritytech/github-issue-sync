@@ -78,7 +78,14 @@ export const syncIssue = async ({
   const settingsValidator = Joi.object<{
     options: [{ id: string; name: string }]
   }>()
-    .keys({ options: Joi.array().items(Joi.object()) })
+    .keys({
+      options: Joi.array().items(
+        Joi.object().keys({
+          id: Joi.string().required(),
+          name: Joi.string().required(),
+        }),
+      ),
+    })
     .options({ allowUnknown: true, skipFunctions: true })
   const settingsResult = settingsValidator.validate(parsedSettings)
   assert(settingsResult.error === undefined, settingsResult.error)
