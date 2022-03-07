@@ -305,13 +305,17 @@ values will be loaded automatically once the application starts.
 
 1. [Set up the GitHub App](#app-github-app)
 2. [Set up the application](#app-setup)
+
     During development it's handy to use a [smee.io](https://smee.io/) proxy,
     through the `WEBHOOK_PROXY_URL` environment variable, for receiving GitHub
     Webhook Events in your local server instance.
+
 3. Start the Postgres instance
+
     See
     <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Setup#postgres>
     (use the variables of `.env.cjs` for the database configuration)
+
 4. Run `yarn` to install the dependencies
 5. [Apply all database migrations](#app-apply-migrations)
 6. Run `yarn dev` to start a development server or `yarn watch` for a
