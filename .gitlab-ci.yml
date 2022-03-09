@@ -1,8 +1,8 @@
 stages:
-#  - install_deps
-#  - lint
-#  - test
-#  - build
+  - install_deps
+  - lint
+  - test
+  - build
   - staging
   - production
 
