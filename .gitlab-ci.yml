@@ -146,7 +146,7 @@ build-push:
         --timeout 300s
         --namespace github-issue-sync
         --values helm/$VALUES_FILE
-        --set image.tag="$CI_COMMIT_SHORT_SHA"
+        --set common.image.tag="$CI_COMMIT_SHORT_SHA"
         github-issue-sync helm/
 
 deploy-staging:
