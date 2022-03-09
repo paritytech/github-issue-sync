@@ -16,6 +16,6 @@ RUN yarn install --frozen-lockfile
 
 ARG PORT
 EXPOSE $PORT
-ENV PORT=\$PORT
+ENV PORT=$PORT
 
 CMD [ "sh", "-c", "yarn migrations:build && yarn migrations:up && yarn start" ]
