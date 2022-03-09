@@ -1,8 +1,8 @@
 stages:
-  - install_deps
-  - lint
-  - test
-  - build
+#  - install_deps
+#  - lint
+#  - test
+#  - build
   - staging
   - production
 
@@ -148,7 +148,8 @@ build-push:
         --timeout 300s
         --namespace github-issue-sync
         --values helm/$VALUES_FILE
-        --set common.image.tag="$CI_COMMIT_SHORT_SHA"
+        #--set common.image.tag="$CI_COMMIT_SHORT_SHA"
+        --set common.image.tag="latest"
         github-issue-sync helm/
 
 deploy-staging:
