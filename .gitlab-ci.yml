@@ -93,7 +93,8 @@ test:
   script:
     - echo "test"
 
-security-scan:
+# fix
+.security-scan:
   stage:                           test
   <<:                              *kubernetes-env
   <<:                              *common-refs
@@ -129,7 +130,8 @@ security-scan:
   after_script:
     - buildah logout --all
 
-build-push:
+# fix
+.build-push:
   stage:                           build
   <<:                              *publish-refs
   <<:                              *build-push-docker-image
