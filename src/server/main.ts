@@ -1,6 +1,7 @@
 import { Logger as ProbotLogger, Probot, Server } from "probot"
 import { getLog } from "probot/lib/helpers/get-log"
 
+import { Logger } from "src/logging"
 import { envNumberVar, envVar } from "src/utils"
 
 import { setup } from "./setup"
@@ -22,6 +23,12 @@ const main = async () => {
       }
     }
   })()
+
+  const logger = new Logger({
+    logFormat,
+    name: "github-issue-sync",
+    minLogLevel: "debug",
+  })
 
   let isTerminating = false
   for (const event of ["uncaughtException", "unhandledRejection"]) {
@@ -66,8 +73,8 @@ const main = async () => {
   switch (logFormat) {
     case "json": {
       probotLogger = getLog({
-        level: "error",
-        logFormat: "json",
+        logFormat,
+        level: "info",
         logLevelInString: true,
         logMessageKey: "msg",
       })
@@ -94,7 +101,7 @@ const main = async () => {
     webhookProxy: process.env.WEBHOOK_PROXY_URL,
   })
   await server.load((bot: Probot) => {
-    return setup(bot, server, logFormat, {
+    return setup(logger, bot, server, logFormat, {
       database,
       github: { appId, clientId, clientSecret, privateKey },
       api: { controlToken: apiControlToken },
@@ -102,7 +109,7 @@ const main = async () => {
   })
 
   await server.start()
-  server.log.info("Probot has started!")
+  logger.info("Probot has started!")
 }
 
 void main()

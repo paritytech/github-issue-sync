@@ -119,6 +119,10 @@ export const getOctokit = (
       throw result
     }
 
+    if ("data" in result) {
+      logger.info({ request, responseData: result.data })
+    }
+
     return result
   })
 
