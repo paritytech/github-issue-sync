@@ -105,6 +105,28 @@ common:
   
   affinity: {}
   
+  livenessProbe:
+    failureThreshold: 3
+    successThreshold: 1
+    initialDelaySeconds: 0
+    timeoutSeconds: 1
+    httpGet:
+      path: /ping
+      port: 3000
+    periodSeconds: 10
+
+  readinessProbe:
+    failureThreshold: 3
+    successThreshold: 1
+    initialDelaySeconds: 0
+    timeoutSeconds: 1
+    httpGet:
+      path: /ping
+      port: 3000
+    periodSeconds: 10
+
+
+
   persistence:
     enabled: false
     accessModes:
