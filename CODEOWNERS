@@ -18,4 +18,4 @@
 
 # CI
 /.gitlab-ci.yml @paritytech/ci @joao-paulo-parity
-/helm/ @ArshamTeymouri @joao-paulo-parity
+/helm/ @paritytech/devops @joao-paulo-parity
