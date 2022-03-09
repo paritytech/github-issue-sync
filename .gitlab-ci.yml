@@ -120,7 +120,6 @@ security-scan:
         --tag "$IMAGE_NAME:$VERSION"
         --tag "$IMAGE_NAME:latest"
         --file "src/server/$DOCKERFILE" .
-    - echo degug $Docker_Hub_User_Parity
     - echo "$Docker_Hub_Pass_Parity" |
         buildah login --username "$Docker_Hub_User_Parity" --password-stdin docker.io
     - buildah info
