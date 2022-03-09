@@ -93,8 +93,7 @@ test:
   script:
     - echo "test"
 
-# fix
-.security-scan:
+security-scan:
   stage:                           test
   <<:                              *kubernetes-env
   <<:                              *common-refs
@@ -130,8 +129,7 @@ test:
   after_script:
     - buildah logout --all
 
-# fix
-.build-push:
+build-push:
   stage:                           build
   <<:                              *publish-refs
   <<:                              *build-push-docker-image
@@ -148,10 +146,8 @@ test:
         --timeout 300s
         --namespace github-issue-sync
         --values helm/$VALUES_FILE
-        --set common.image.tag=latest
+        --set common.image.tag="$CI_COMMIT_SHORT_SHA"
         github-issue-sync helm/
- 
- #--set common.image.tag="$CI_COMMIT_SHORT_SHA"
 
 deploy-staging:
   variables:
