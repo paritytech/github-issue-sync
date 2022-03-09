@@ -9,9 +9,15 @@ RUN apk add jq
 
 RUN mkdir /app && chown node:node /app
 COPY --chown=node:node . /app
+WORKDIR /app
+
+# Create an empty .env.cjs file so that the commands we use in package.json
+# still work as expected. This can be an empty file since the relevant
+# environment variables will be provided directly to the container, not through
+# .env.cjs.
+RUN echo -n > /app/src/server/.env.cjs
 
 USER node
-WORKDIR /app
 RUN yarn install --frozen-lockfile
 
 ARG PORT

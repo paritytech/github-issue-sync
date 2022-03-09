@@ -22,6 +22,7 @@ const setupHealthRoute = function (server: Server) {
 }
 
 export const setup = (
+  logger: Logger,
   bot: Probot,
   server: Server,
   logFormat: LogFormat,
@@ -38,14 +39,11 @@ export const setup = (
     api: ApiConfiguration
   },
 ) => {
-  const logger = new Logger({
-    logFormat,
-    name: "github-issue-sync",
-    minLogLevel: "debug",
-  })
-
   const appAuth = createAppAuth(conf.github)
-  const getInstallationOctokit = (installationId: number | undefined) => {
+  const getInstallationOctokit = (
+    logger: Logger,
+    installationId: number | undefined,
+  ) => {
     return getOctokit(
       new Octokit(),
       async () => {
