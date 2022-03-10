@@ -219,8 +219,8 @@ curl \
 This API will respond with the newly-created token which later
 [can be deleted](#service-api-delete-token).
 
-Note that [`$API_CONTROL_TOKEN`](#service-configuration) should be used as a token
-here since normal tokens are not able to create other tokens.
+Note that [`$API_CONTROL_TOKEN`](#service-configuration) should be used as a
+token here since normal tokens are not able to create other tokens.
 
 ```
 curl \
@@ -251,7 +251,8 @@ Follow the instructions of
 <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Bots/Development/Create-a-new-GitHub-App>
 for creating a new GitHub App.
 
-After creating the app, you should [configure](#service-github-app-configuration) and
+After creating the app, you should
+[configure](#service-github-app-configuration) and
 [install it](#service-github-app-installation) (make sure the
 [environment](#service-setup-environment-variables) is properly set up before using it).
 
