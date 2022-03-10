@@ -47,7 +47,7 @@ Before starting to work on this project, we recommend reading the
 
 # App <a name="app"></a>
 
-The application (which impleents a [GitHub App](#app-github-app)) is ran **as a
+The application (which implements a [GitHub App](#app-github-app)) is ran **as a
 service** by executing the main entrypoint; consult the
 [Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
 server or [docker-compose.yml](./docker-compose.yml) for the whole application.
