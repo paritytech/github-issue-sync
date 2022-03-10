@@ -49,8 +49,8 @@ Before starting to work on this project, we recommend reading the
 
 The github-issue-sync service implements a [GitHub App](#service-github-app)
 which is started by the [main entrypoint](./src/server/main.ts); consult the
-[Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
-server or [docker-compose.yml](./docker-compose.yml) for the whole application.
+[Dockerfile](./src/server/Dockerfile) for running the server or
+[docker-compose.yml](./docker-compose.yml) for the whole application.
 
 It is composed of
 
