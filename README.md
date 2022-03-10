@@ -43,7 +43,7 @@ Before starting to work on this project, we recommend reading the
     - [Release steps](#action-release-steps)
   - [Workflow configuration](#action-workflow-configuration)
   - [Install](#action-install)
-- [Implementation](#service-implementation)
+- [Implementation](#implementation)
 
 # Service <a name="service"></a>
 
