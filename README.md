@@ -32,7 +32,10 @@ Before starting to work on this project, we recommend reading the
     - [Run the application](#service-development-run)
     - [Database migrations](#service-development-database-migrations)
   - [Deployment](#service-deployment)
-    - [Manual deployment](#service-deployment-manual)
+    - [Logs](#service-deployment-logs)
+    - [Production](#service-deployment-production)
+    - [Staging](#service-deployment-staging)
+    - [Manual](#service-deployment-manual)
   - [Implementation](#implementation)
 - [GitHub Action](#action)
   - [Build](#action-build)
@@ -58,7 +61,7 @@ It is composed of
   POST
 - A database for storing [Rules](#service-api-create-rule)
 
-<a name="app-events"></a>
+<a name="service-events"></a>
 The following events trigger the synchronization of an issue into the project
 targetted by a [Rule](#service-api-create-rule):
 
@@ -69,7 +72,7 @@ targetted by a [Rule](#service-api-create-rule):
 - [`issues.labeled`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-18)
   - Happens when a label is added to an issue
 
-## API <a name="app-api"></a>
+## API <a name="service-api"></a>
 
 An HTTP API is provided for the sake of enabling configuration at runtime. The
 following sections will showcase examples of how to use said API through `curl`.
@@ -77,7 +80,7 @@ following sections will showcase examples of how to use said API through `curl`.
 All API calls are protected by tokens which should be registered by the
 [Create token](#service-api-create-token) endpoint.
 
-### Create a rule <a name="app-api-create-rule"></a>
+### Create a rule <a name="service-api-create-rule"></a>
 
 `POST /api/v1/rule/repository/:owner/:name`
 
@@ -90,7 +93,7 @@ Keep track of the returned ID in case you want to
 [update the rule later](#service-api-update-rule); regardless, all IDs can be
 retrieved at any point by using the [listing endpoint](#service-api-list-rules).
 
-#### Unfiltered Rule <a name="app-api-unfiltered-rule"></a>
+#### Unfiltered Rule <a name="service-api-unfiltered-rule"></a>
 
 If a Rule is specified with no filter, **any** issue associated with the
 [incoming events](#service-events) will be registered to the board.
@@ -107,7 +110,7 @@ curl \
   }'
 ```
 
-#### Filtered Rule <a name="app-api-filtered-rule"></a>
+#### Filtered Rule <a name="service-api-filtered-rule"></a>
 
 Optionally it's possible to specify a
 [`jq` expression](https://stedolan.github.io/jq/manual/)
@@ -138,7 +141,7 @@ matched. You can verify this locally:
 
 `jq -r -n --argjson input '{"labels":[{"name": "foo"}]}' '$input | .labels[] | select(.name == "epic")'`
 
-### Update a rule <a name="app-api-update-rule"></a>
+### Update a rule <a name="service-api-update-rule"></a>
 
 `PATCH /api/v1/rule/:id`
 
@@ -159,7 +162,7 @@ curl \
   }'
 ```
 
-### Fetch a rule <a name="app-api-fetch-rule"></a>
+### Fetch a rule <a name="service-api-fetch-rule"></a>
 
 `GET /api/v1/rule/:id`
 
@@ -170,7 +173,7 @@ curl \
   -X GET "http://github-issue-sync/api/v1/rule/$id"
 ```
 
-### List rules for a specific repository <a name="app-api-list-repository-rules"></a>
+### List rules for a specific repository <a name="service-api-list-repository-rules"></a>
 
 `GET /api/v1/rule/repository/:owner/:name`
 
@@ -181,7 +184,7 @@ curl \
   -X GET "http://github-issue-sync/api/v1/rule/$owner/$name"
 ```
 
-### List all rules <a name="app-api-list-rules"></a>
+### List all rules <a name="service-api-list-rules"></a>
 
 `GET /api/v1/rule`
 
@@ -192,7 +195,7 @@ curl \
   -X GET "http://github-issue-sync/api/v1/rule"
 ```
 
-### Delete a rule <a name="app-api-delete-rule"></a>
+### Delete a rule <a name="service-api-delete-rule"></a>
 
 `DELETE /api/v1/rule/:id`
 
@@ -202,7 +205,7 @@ curl \
   -X DELETE "http://github-issue-sync/api/v1/rule/:id"
 ```
 
-### Delete all rules for a specific repository <a name="app-api-delete-repository-rules"></a>
+### Delete all rules for a specific repository <a name="service-api-delete-repository-rules"></a>
 
 `DELETE /api/v1/rule/repository/:owner/:name`
 
@@ -212,7 +215,7 @@ curl \
   -X DELETE "http://github-issue-sync/api/v1/rule/$owner/$name"
 ```
 
-### Create a token <a name="app-api-create-token"></a>
+### Create a token <a name="service-api-create-token"></a>
 
 `POST /api/v1/token`
 
@@ -230,7 +233,7 @@ curl \
   -d '{ "description": "Owned by John Smith from the CI team" }'
 ```
 
-### Delete a token <a name="app-api-delete-token"></a>
+### Delete a token <a name="service-api-delete-token"></a>
 
 `DELETE /api/v1/token`
 
@@ -241,7 +244,7 @@ curl \
   -X DELETE "http://github-issue-sync/api/v1/token"
 ```
 
-## GitHub App <a name="app-github-app"></a>
+## GitHub App <a name="service-github-app"></a>
 
 The GitHub App is necessary for the application to receive
 [webhook events](https://probot.github.io/docs/webhooks) and
@@ -256,7 +259,7 @@ After creating the app, you should
 [install it](#service-github-app-installation) (make sure the
 [environment](#service-setup-environment-variables) is properly set up before using it).
 
-### Configuration <a name="app-github-app-configuration"></a>
+### Configuration <a name="service-github-app-configuration"></a>
 
 Configuration is done at `https://github.com/settings/apps/${APP}/permissions`.
 
@@ -276,15 +279,15 @@ Configuration is done at `https://github.com/settings/apps/${APP}/permissions`.
 - Issues
   - Events used to trigger syncing for our primary use-case
 
-### Installation <a name="app-github-app-installation"></a>
+### Installation <a name="service-github-app-installation"></a>
 
 Having [created](#service-github-app) and
 [configured](#service-github-app-configuration) the GitHub App, install it in a
 repository through `https://github.com/settings/apps/${APP}/installations`.
 
-## Setup <a name="app-setup"></a>
+## Setup <a name="service-setup"></a>
 
-### Requirements <a name="app-setup-requirements"></a>
+### Requirements <a name="service-setup-requirements"></a>
 
 - `Node.js` for running the application
 - `yarn` for installing packages and starting scripts
@@ -294,16 +297,16 @@ repository through `https://github.com/settings/apps/${APP}/installations`.
 - `postgres` for the database
     See <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Setup#postgres>
 
-### Environment variables <a name="app-setup-environment-variables"></a>
+### Environment variables <a name="service-setup-environment-variables"></a>
 
 All environment variables are documented in the
 [src/server/.env.example.cjs](./src/server/.env.example.cjs) file. For
 development you're welcome to copy that file to `src/server.env.cjs` so that all
 values will be loaded automatically once the application starts.
 
-## Development <a name="app-development"></a>
+## Development <a name="service-development"></a>
 
-### Run the application <a name="app-development-run"></a>
+### Run the application <a name="service-development-run"></a>
 
 1. [Set up the GitHub App](#service-github-app)
 2. [Set up the application](#service-setup)
@@ -326,14 +329,14 @@ values will be loaded automatically once the application starts.
 7. Trigger [events](#service-events) in the repositories where you've installed the
   GitHub App (Step 2) and check if it works
 
-### Database migrations <a name="app-development-database-migrations"></a>
+### Database migrations <a name="service-development-database-migrations"></a>
 
 Database migrations live in the [migrations directory](./src/server/migrations).
 
 Migrations are executed in ascending order by the file name. The format for
 their files names is `${TIMESTAMP}_${TITLE}.ts`.
 
-- Apply all pending migrations: `yarn migrations:up` <a name="app-apply-migrations"></a>
+- Apply all pending migrations: `yarn migrations:up` <a name="service-apply-migrations"></a>
 - Rollback a single migration: `yarn migrations:down`
 - Create a new migration: `yarn migrations:create [name]`
 
@@ -341,13 +344,21 @@ Check the
 [official documentation](https://github.com/salsita/node-pg-migrate/blob/master/docs/cli.md)
 for more details.
 
-## Deployment <a name="app-deployment"></a>
+## Deployment <a name="service-deployment"></a>
 
-TODO: Replace with the deployment workflow instructions once the deployment is ready.
+### Logs <a name="service-deployment-logs"></a>
 
-TODO: Add links to Grafana logs once the deployment is ready.
+TODO after #2
 
-### Manual deployment <a name="app-deployment-manual"></a>
+### Production <a name="service-deployment-production"></a>
+
+TODO after #2
+
+### Staging <a name="service-deployment-staging"></a>
+
+TODO after #2
+
+### Manual <a name="service-deployment-manual"></a>
 
 The whole application can be spawned with `docker-compose up`.
 
