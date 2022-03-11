@@ -2,31 +2,38 @@
 
 This project enables syncing GitHub Issues to a
 [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience).
-It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
+It can be used either as a [Service](#service) or a [GitHub Action](#action).
+
+Before starting to work on this project, we recommend reading the
+[Implementation section](#implementation).
 
 ## TOC
 
-- [GitHub App](#app)
-  - [API](#app-api)
-    - [Create a rule](#app-api-create-rule)
-      - [Unfiltered Rule](#app-api-unfiltered-rule)
-      - [Filtered Rule](#app-api-filtered-rule)
-    - [Update a rule](#app-api-update-rule)
-    - [Fetch a rule](#app-api-fetch-rule)
-    - [List all rules for a specific repository](#app-api-list-repository-rules)
-    - [List all rules](#app-api-list-rules)
-    - [Delete a rule](#app-api-delete-rule)
-    - [Delete all rules for a specific repository](#app-api-delete-repository-rules)
-    - [Create a token](#app-api-create-token)
-    - [Delete a token](#app-api-delete-token)
-  - [Development](#app-development)
-    - [Local setup](#app-development-local-setup)
-    - [Database migrations](#app-development-database-migrations)
-  - [Deployment](#app-deployment)
-    - [Manual deployment](#app-manual-deployment)
-  - [Dependencies](#app-dependencies)
-  - [Settings](#app-settings)
-  - [Configuration](#app-configuration)
+- [Service](#service)
+  - [API](#service-api)
+    - [Create a rule](#service-api-create-rule)
+      - [Unfiltered Rule](#service-api-unfiltered-rule)
+      - [Filtered Rule](#service-api-filtered-rule)
+    - [Update a rule](#service-api-update-rule)
+    - [Fetch a rule](#service-api-fetch-rule)
+    - [List all rules for a specific repository](#service-api-list-repository-rules)
+    - [List all rules](#service-api-list-rules)
+    - [Delete a rule](#service-api-delete-rule)
+    - [Delete all rules for a specific repository](#service-api-delete-repository-rules)
+    - [Create a token](#service-api-create-token)
+    - [Delete a token](#service-api-delete-token)
+  - [GitHub App](#service-github-app)
+    - [Configuration](#service-github-app-configuration)
+    - [Installation](#service-github-app-installation)
+  - [Setup](#service-setup)
+    - [Requirements](#service-setup-requirements)
+    - [Environment variables](#service-setup-environment-variables)
+  - [Development](#service-development)
+    - [Run the application](#service-development-run)
+    - [Database migrations](#service-development-database-migrations)
+  - [Deployment](#service-deployment)
+    - [Manual deployment](#service-deployment-manual)
+  - [Implementation](#implementation)
 - [GitHub Action](#action)
   - [Build](#action-build)
     - [Build steps](#action-build-steps)
@@ -36,21 +43,24 @@ It can be used either as a [GitHub App](#app) or a [GitHub Action](#action).
     - [Release steps](#action-release-steps)
   - [Workflow configuration](#action-workflow-configuration)
   - [Install](#action-install)
+- [Implementation](#implementation)
 
-# GitHub App <a name="app"></a>
+# Service <a name="service"></a>
 
-A GitHub App is ran **as a service** by executing the main entrypoint; consult
-the [Dockerfile](./src/server/Dockerfile) to have an idea for how to start the
-server or [docker-compose.yml](./docker-compose.yml) for the whole application.
+The github-issue-sync service implements a [GitHub App](#service-github-app)
+which is started by the [main entrypoint](./src/server/main.ts); consult the
+[Dockerfile](./src/server/Dockerfile) for running the server or
+[docker-compose.yml](./docker-compose.yml) for the whole application.
 
-The application is composed of
+It is composed of
 
-- A web server for receiving GitHub [Webhook events](#app-events) via HTTP POST
-- A database for storing [Rules](#app-api-create-rule)
+- A web server for receiving GitHub [Webhook events](#service-events) via HTTP
+  POST
+- A database for storing [Rules](#service-api-create-rule)
 
 <a name="app-events"></a>
 The following events trigger the synchronization of an issue into the project
-targetted by a [Rule](#app-api-create-rule):
+targetted by a [Rule](#service-api-create-rule):
 
 - [`issues.opened`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-18)
   - Happens when a new issue is created in a repository
@@ -65,7 +75,7 @@ An HTTP API is provided for the sake of enabling configuration at runtime. The
 following sections will showcase examples of how to use said API through `curl`.
 
 All API calls are protected by tokens which should be registered by the
-[Create token](#app-api-create-token) endpoint.
+[Create token](#service-api-create-token) endpoint.
 
 ### Create a rule <a name="app-api-create-rule"></a>
 
@@ -77,13 +87,13 @@ check the type of `IssueToProjectFieldRuleCreationInput` in
 [the source types](./src/server/types.ts) for all the available fields.
 
 Keep track of the returned ID in case you want to
-[update the rule later](#app-api-update-rule); regardless, all IDs can be
-retrieved at any point by using the [listing endpoint](#app-api-list-rules).
+[update the rule later](#service-api-update-rule); regardless, all IDs can be
+retrieved at any point by using the [listing endpoint](#service-api-list-rules).
 
 #### Unfiltered Rule <a name="app-api-unfiltered-rule"></a>
 
 If a Rule is specified with no filter, **any** issue associated with the
-[incoming events](#app-events) will be registered to the board.
+[incoming events](#service-events) will be registered to the board.
 
 ```
 curl \
@@ -207,10 +217,10 @@ curl \
 `POST /api/v1/token`
 
 This API will respond with the newly-created token which later
-[can be deleted](#app-api-delete-token).
+[can be deleted](#service-api-delete-token).
 
-Note that [`$API_CONTROL_TOKEN`](#app-configuration) should be used as a token
-here since normal tokens are not able to create other tokens.
+Note that [`$API_CONTROL_TOKEN`](#service-configuration) should be used as a
+token here since normal tokens are not able to create other tokens.
 
 ```
 curl \
@@ -231,31 +241,90 @@ curl \
   -X DELETE "http://github-issue-sync/api/v1/token"
 ```
 
+## GitHub App <a name="app-github-app"></a>
+
+The GitHub App is necessary for the application to receive
+[webhook events](https://probot.github.io/docs/webhooks) and
+access the GitHub API properly.
+
+Follow the instructions of
+<https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Bots/Development/Create-a-new-GitHub-App>
+for creating a new GitHub App.
+
+After creating the app, you should
+[configure](#service-github-app-configuration) and
+[install it](#service-github-app-installation) (make sure the
+[environment](#service-setup-environment-variables) is properly set up before using it).
+
+### Configuration <a name="app-github-app-configuration"></a>
+
+Configuration is done at `https://github.com/settings/apps/${APP}/permissions`.
+
+#### Repository permissions
+
+- Issues: Read-only
+  - Allows subscription to the "Issues" event
+
+#### Organization permissions
+
+- Projects: Read & write
+  - Allows for items to be created in
+    [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience)s.
+
+#### Events subscriptions
+
+- Issues
+  - Events used to trigger syncing for our primary use-case
+
+### Installation <a name="app-github-app-installation"></a>
+
+Having [created](#service-github-app) and
+[configured](#service-github-app-configuration) the GitHub App, install it in a
+repository through `https://github.com/settings/apps/${APP}/installations`.
+
+## Setup <a name="app-setup"></a>
+
+### Requirements <a name="app-setup-requirements"></a>
+
+- `Node.js` for running the application
+- `yarn` for installing packages and starting scripts
+  - If it's not already be bundled with Node.js, install with
+    `npm install -g yarn`
+- `jq` for the filtering expressions on [Rules](#service-api-create-rule)
+- `postgres` for the database
+    See <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Setup#postgres>
+
+### Environment variables <a name="app-setup-environment-variables"></a>
+
+All environment variables are documented in the
+[src/server/.env.example.cjs](./src/server/.env.example.cjs) file. For
+development you're welcome to copy that file to `src/server.env.cjs` so that all
+values will be loaded automatically once the application starts.
+
 ## Development <a name="app-development"></a>
 
-### Local setup <a name="app-development-local-setup"></a>
+### Run the application <a name="app-development-run"></a>
 
-1. [Register a GitHub App](https://probot.github.io/docs/deployment/#register-the-github-app)
-   - https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app
-   - https://probot.github.io/docs/development/
-2. [Set the appropriate permissions on the GitHub App](#app-settings)
-3. Install the GitHub App in a repository by clicking the "Install" button
-   on the settings page of your app (`https://github.com/apps/${app}`)
-4. Copy [src/server/.env.example.cjs](./src/server/.env.example.cjs) to
-  `src/server/.env.cjs` and edit it according its instructions
-5. Run `yarn` to install the dependencies
-6. Start the Postgres instance
-  - <a name="database-container"></a> Through `docker`: take the
-    DB_PASSWORD and DB_USER from `src/server/.env.cjs` and run
-    `docker run --rm -e POSTGRES_PASSWORD=$DB_PASSWORD -e POSTGRES_USER=$DB_USER postgres`
-  - For a local instance, make sure the configuration in `src/server/.env.cjs`
-    is correct
-7. [Apply all database migrations](#apply-migrations)
-8. Run `yarn dev` to start a development server or `yarn watch` for a
-   development server which automatically restarts when you make changes to the
-   source files
-9. Trigger the relevant events in the GitHub repository where you've installed
-   the application (Step 3) and check if it works
+1. [Set up the GitHub App](#service-github-app)
+2. [Set up the application](#service-setup)
+
+    During development it's handy to use a [smee.io](https://smee.io/) proxy,
+    through the `WEBHOOK_PROXY_URL` environment variable, for receiving GitHub
+    Webhook Events in your local server instance.
+
+3. Start the Postgres instance
+
+    See
+    <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/Setup#postgres>
+    (use the variables of `.env.cjs` for the database configuration)
+
+4. Run `yarn` to install the dependencies
+5. [Apply all database migrations](#service-apply-migrations)
+6. Run `yarn dev` to start a development server or `yarn watch` for a
+  development server which automatically restarts when you make changes to the
+  source files
+7. Trigger [events](#service-events) in the repositories where you've installed the
+  GitHub App (Step 2) and check if it works
 
 ### Database migrations <a name="app-development-database-migrations"></a>
 
@@ -264,7 +333,7 @@ Database migrations live in the [migrations directory](./src/server/migrations).
 Migrations are executed in ascending order by the file name. The format for
 their files names is `${TIMESTAMP}_${TITLE}.ts`.
 
-- Apply all pending migrations: `yarn migrations:up` <a name="apply-migrations"></a>
+- Apply all pending migrations: `yarn migrations:up` <a name="app-apply-migrations"></a>
 - Rollback a single migration: `yarn migrations:down`
 - Create a new migration: `yarn migrations:create [name]`
 
@@ -274,7 +343,11 @@ for more details.
 
 ## Deployment <a name="app-deployment"></a>
 
-### Manual deployment <a name="app-manual-deployment"></a>
+TODO: Replace with the deployment workflow instructions once the deployment is ready.
+
+TODO: Add links to Grafana logs once the deployment is ready.
+
+### Manual deployment <a name="app-deployment-manual"></a>
 
 The whole application can be spawned with `docker-compose up`.
 
@@ -282,41 +355,6 @@ For ad-hoc deployments, for instance in a VM, one idea is to use the
 `docker-compose up` command in a `tmux` session. e.g.
 
 `tmux new -s github-issue-sync sh -c "docker-compose up 2>&1 | tee -a log.txt"`
-
-## Dependencies <a name="app-dependencies"></a>
-
-- `Node.js` for running the application
-- `yarn` for installing packages and starting scripts
-- `jq` for the filtering expressions on [Rules](#app-api-create-rule)
-- `postgres` for the database
-  - For local development we recommend
-    [running a Postgres instance through `docker`](#database-container)
-
-## Settings <a name="app-settings"></a>
-
-The permissions and event subscriptions can be configured at
-`https://github.com/settings/apps/${app}/permissions`
-
-### Repository permissions
-
-- Issues: Read-only
-  - Allows subscription to the "Issues" event
-
-### Organization permissions
-
-- Projects: Read & write
-  - Allows for items to be created in
-    [GitHub Project](https://docs.github.com/en/issues/trying-out-the-new-projects-experience)s.
-
-### Events subscriptions
-
-- Issues
-  - Events used to trigger syncing for our primary use-case
-
-## Configuration <a name="app-configuration"></a>
-
-Consult [.env.example.cjs](./src/server/.env.example.cjs) for the explanation on
-each environment variable relevant for this application.
 
 # GitHub Action <a name="action"></a>
 
@@ -439,3 +477,15 @@ jobs:
 Having [released](#action-release) the code, the final step is to copy the [workflow
 configuration](#action-workflow-configuration) to the `.github/workflows` folder of
 projects whose issues need to be synced.
+
+# Implementation <a name="implementation"></a>
+
+The [sync](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/core.ts#L7) is triggered from:
+
+- [Webhook events](https://probot.github.io/docs/webhooks/) in
+  [event handlers](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/event.ts#L35)
+  for the [service](#service)
+  - The event listeners are set up in
+    [`main`](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/main.ts#L97)
+- [CLI entrypoint](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/action/main.ts#L33)
+  for the [GitHub Action](#github-acttion)
