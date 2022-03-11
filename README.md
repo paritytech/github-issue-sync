@@ -348,15 +348,15 @@ for more details.
 
 ### Logs <a name="service-deployment-logs"></a>
 
-TODO after #2
+TODO after <https://github.com/paritytech/github-issue-sync/pull/2>
 
 ### Production <a name="service-deployment-production"></a>
 
-TODO after #2
+TODO after <https://github.com/paritytech/github-issue-sync/pull/2>
 
 ### Staging <a name="service-deployment-staging"></a>
 
-TODO after #2
+TODO after <https://github.com/paritytech/github-issue-sync/pull/2>
 
 ### Manual <a name="service-deployment-manual"></a>
 
