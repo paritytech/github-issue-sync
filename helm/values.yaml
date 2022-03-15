@@ -4,17 +4,17 @@ common:
   fullnameOverride: "github-issue-sync"
 
   replicaCount: 1
-  
+
   image:
     repository: paritytech/github-issue-sync
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: "latest"
-  
+
   imagePullSecrets: []
   nameOverride: ""
   fullnameOverride: ""
-  
+
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
@@ -23,8 +23,8 @@ common:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
-  
-  env: 
+
+  env:
   # GREETING: "Warm greetings to"
     DB_USER: "github-issue-sync"
     DB_PASSWORD: ""
@@ -32,24 +32,25 @@ common:
     DB_PORT: "5432"
     DB_NAME: "github-issue-sync"
     LOG_FORMAT: json
-  
+    PORT: "from-gitlab-vars"
+
   envFrom: []
   #  - configMapRef:
   #      name: env-configmap
   #  - secretRef:
   #      name: github-issue-sync
-  
+
   secrets: {}
   #  admin: <base64-encoded>
-  
+
   podAnnotations: {}
-  
+
   podSecurityContext:
     fsGroup: 1000
     runAsNonRoot: true
     runAsUser: 1000
     runAsGroup: 1000
-  
+
   containerSecurityContext: {}
     # capabilities:
     #   drop:
@@ -58,12 +59,12 @@ common:
     # runAsNonRoot: true
     # runAsUser: 1000
     # runAsGroup: 1000
-  
+
   service:
     type: ClusterIP
     port: 80
-    containerPort: 3000
-  
+    containerPort: {{ .Values.common.env.APP_PORT }}
+
   # ingress:
   #   enabled: true
   #   className: ""
@@ -79,7 +80,7 @@ common:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-  
+
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
@@ -91,20 +92,20 @@ common:
     # requests:
     #   cpu: 100m
     #   memory: 128Mi
-  
+
   autoscaling:
     enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
-  
+
   nodeSelector: {}
-  
+
   tolerations: []
-  
+
   affinity: {}
-  
+
   livenessProbe:
     failureThreshold: 3
     successThreshold: 1
@@ -112,7 +113,7 @@ common:
     timeoutSeconds: 1
     httpGet:
       path: /ping
-      port: 3000
+      port: {{ .Values.common.env.APP_PORT }}
     periodSeconds: 10
 
   readinessProbe:
@@ -122,7 +123,7 @@ common:
     timeoutSeconds: 1
     httpGet:
       path: /ping
-      port: 3000
+      port: {{ .Values.common.env.APP_PORT }}
     periodSeconds: 10
 
 
@@ -138,8 +139,8 @@ common:
     #     app.kubernetes.io/name: github-issue-sync
     # subPath: ""
     # existingClaim:
-    # storageClassName: 
-  
+    # storageClassName:
+
   cloudsql:
     enabled: true
     service:
