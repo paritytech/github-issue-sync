@@ -118,7 +118,6 @@ build-push:
         --namespace github-issue-sync
         --values helm/$VALUES_FILE
         --set common.image.tag="$CI_COMMIT_SHORT_SHA"
-        --set common.env.PORT="$APP_PORT"
         github-issue-sync helm/
 
 deploy-staging:

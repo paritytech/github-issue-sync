@@ -32,7 +32,7 @@ common:
     DB_PORT: "5432"
     DB_NAME: "github-issue-sync"
     LOG_FORMAT: json
-    PORT: "from-gitlab-vars"
+    PORT: "3000"
 
   envFrom: []
   #  - configMapRef:
