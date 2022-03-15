@@ -1,0 +1,138 @@
+stages:
+  - install_deps
+  - lint
+  - test
+  - build
+  - deploy
+
+variables:                         &default-vars
+  CI_IMAGE:                        "node:16.10"
+  APP_PORT:                        3000
+  DEPLOYMENT_IMAGE_REGISTRY:       docker.io/paritytech/github-issue-sync
+  DEPLOYMENT_TAG:                  $CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
+  # Vault Section
+  VAULT_ADDR:                      https://vault.parity-mgmt-vault.parity.io
+  VAULT_AUTH_PATH:                 gitlab-parity-io-jwt
+  VAULT_AUTH_ROLE:                 cicd_gitlab_parity_${CI_PROJECT_NAME}
+  HELM_SECRETS_DRIVER:             vals
+
+default:
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - unknown_failure
+      - api_failure
+  interruptible:                   true
+  tags:
+    - kubernetes-parity-build
+  image:                           $CI_IMAGE
+
+.common-refs:                      &common-refs
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                 # PRs
+
+.staging-refs:                     &staging-refs
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^stg-v[0-9]+\.[0-9]+.*$/  # e.g. stg-v0.1
+
+.production-refs:                  &production-refs
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^v[0-9]+\.[0-9]+.*$/      # e.g. v0.1
+
+install-deps:
+  <<:                              *common-refs
+  stage:                           install_deps
+  script:
+    - yarn
+  artifacts:
+    name:                          install-deps_$CI_PIPELINE_ID
+    when:                          on_success
+    expire_in:                     1 hour
+    paths:
+      - ./node_modules
+
+lint:
+  <<:                              *common-refs
+  stage:                           lint
+  script:
+    # TODO: Use pre-commit run --all
+    - echo "lint"
+
+security-scan:
+  <<:                              *common-refs
+  stage:                           test
+  image:                           aquasec/trivy:latest
+  script:
+    - trivy fs .
+
+# template task for building and pushing an image
+.build-push-docker-image:          &build-push-docker-image
+  stage:                           build
+  image:                           quay.io/buildah/stable
+  script:
+    - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
+        ( echo "no docker credentials provided"; exit 1 )
+    - buildah bud
+        --format=docker
+        --build-arg VCS_REF="$CI_COMMIT_SHA"
+        --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        --build-arg VERSION="$DEPLOYMENT_TAG"
+        --build-arg PORT="$APP_PORT"
+        --tag "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
+        --file src/server/Dockerfile .
+    - echo "$Docker_Hub_Pass_Parity" |
+        buildah login --username "$Docker_Hub_User_Parity" --password-stdin docker.io
+    - buildah info
+    - buildah push --format=v2s2 "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
+  after_script:
+    - buildah logout --all
+
+build-staging:
+  <<:                              *staging-refs
+  <<:                              *build-push-docker-image
+  environment:
+    name:                          parity-prod
+
+build-production:
+  <<:                              *production-refs
+  <<:                              *build-push-docker-image
+  environment:
+    name:                          parity-stg
+
+# Deploy to Kubernetes
+.deploy-k8s:                       &deploy-k8s
+  stage:                           deploy
+  image:                           "paritytech/kubetools:3.5.3"
+  script:
+    # https://docs.gitlab.com/ee/ci/examples/authenticating-with-hashicorp-vault/#example
+    - export VAULT_TOKEN="$(vault write -field=token auth/$VAULT_AUTH_PATH/login role=$VAULT_AUTH_ROLE jwt=$CI_JOB_JWT)"
+    - helm dependency update helm/
+    - helm secrets upgrade
+        --install
+        --atomic
+        --timeout 300s
+        --namespace github-issue-sync
+        --values helm/$VALUES_FILE
+        --set common.image.tag="$DEPLOYMENT_TAG"
+        --set common.containerPort="$APP_PORT"
+        --set common.livenessProbe.httpGet.port="$APP_PORT"
+        --set common.readinessProbe.httpGet.port="$APP_PORT"
+        github-issue-sync helm/
+
+deploy-staging:
+  <<:                              *staging-refs
+  <<:                              *deploy-k8s
+  variables:
+    VALUES_FILE:                   values-stg.yaml
+  environment:
+    name:                          parity-stg
+
+deploy-production:
+  <<:                              *production-refs
+  <<:                              *deploy-k8s
+  variables:
+    VALUES_FILE:                   values-prod.yaml
+  environment:
+    name:                          parity-prod
