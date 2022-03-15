@@ -92,7 +92,7 @@ security-scan:
     - buildah logout --all
 
 build-staging:
-  <<:            *production-refs
+  <<:            *staging-refs
   <<:            *build-push-docker-image
   environment:
     name:        parity-prod
