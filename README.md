@@ -9,6 +9,7 @@ Before starting to work on this project, we recommend reading the
 
 ## TOC
 
+- [How it works](#how-it-works)
 - [Service](#service)
   - [API](#service-api)
     - [Create a rule](#service-api-create-rule)
@@ -47,20 +48,9 @@ Before starting to work on this project, we recommend reading the
   - [Install](#action-install)
 - [Implementation](#implementation)
 
-# Service <a name="service"></a>
+# How it works <a name="how-it-works"></a>
 
-The github-issue-sync service implements a [GitHub App](#service-github-app)
-which is started by the [main entrypoint](./src/server/main.ts); consult the
-[Dockerfile](./src/server/Dockerfile) for running the server or
-[docker-compose.yml](./docker-compose.yml) for the whole application.
-
-It is composed of
-
-- A web server for receiving GitHub [Webhook events](#service-events) via HTTP
-  POST
-- A database for storing [Rules](#service-api-create-rule)
-
-<a name="service-events"></a>
+<a name="sync-events"></a>
 The following events trigger the synchronization of an issue into the project
 targetted by a [Rule](#service-api-create-rule):
 
@@ -70,6 +60,19 @@ targetted by a [Rule](#service-api-create-rule):
   - Happens when a new issue is reopened in a repository
 - [`issues.labeled`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-18)
   - Happens when a label is added to an issue
+
+# Service <a name="service"></a>
+
+The github-issue-sync service implements a [GitHub App](#service-github-app)
+which is started by the [main entrypoint](./src/server/main.ts); consult the
+[Dockerfile](./src/server/Dockerfile) for running the server or
+[docker-compose.yml](./docker-compose.yml) for the whole application.
+
+It is composed of
+
+- A web server for receiving GitHub [Webhook events](#sync-events) via HTTP
+  POST
+- A database for storing [Rules](#service-api-create-rule)
 
 ## API <a name="service-api"></a>
 
@@ -95,7 +98,7 @@ retrieved at any point by using the [listing endpoint](#service-api-list-rules).
 #### Unfiltered Rule <a name="service-api-unfiltered-rule"></a>
 
 If a Rule is specified with no filter, **any** issue associated with the
-[incoming events](#service-events) will be registered to the board.
+[incoming events](#sync-events) will be registered to the board.
 
 ```
 curl \
@@ -325,7 +328,7 @@ values will be loaded automatically once the application starts.
 6. Run `yarn dev` to start a development server or `yarn watch` for a
   development server which automatically restarts when you make changes to the
   source files
-7. Trigger [events](#service-events) in the repositories where you've installed the
+7. Trigger [events](#sync-events) in the repositories where you've installed the
   GitHub App (Step 2) and check if it works
 
 ### Database migrations <a name="service-development-database-migrations"></a>
