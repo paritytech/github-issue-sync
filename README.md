@@ -33,8 +33,7 @@ Before starting to work on this project, we recommend reading the
     - [Database migrations](#service-development-database-migrations)
   - [Deployment](#service-deployment)
     - [Logs](#service-deployment-logs)
-    - [Production](#service-deployment-production)
-    - [Staging](#service-deployment-staging)
+    - [Environments](#service-deployment-environments)
     - [Manual](#service-deployment-manual)
   - [Implementation](#implementation)
 - [GitHub Action](#action)
@@ -348,15 +347,18 @@ for more details.
 
 ### Logs <a name="service-deployment-logs"></a>
 
-TODO after <https://github.com/paritytech/github-issue-sync/pull/2>
+See <https://gitlab.parity.io/groups/parity/opstooling/-/wikis/home>
 
-### Production <a name="service-deployment-production"></a>
+### Environments <a name="service-deployment-environments"></a>
 
-TODO after <https://github.com/paritytech/github-issue-sync/pull/2>
+When you push a deployment tag to GitHub, it will be
+[mirrored to GitLab](https://gitlab.parity.io/parity/opstooling/github-issue-sync)
+and then its [CI pipeline](./.gitlab-ci.yml) will be run for deploying the app.
 
-### Staging <a name="service-deployment-staging"></a>
+The application can be deployed to the following environments:
 
-TODO after <https://github.com/paritytech/github-issue-sync/pull/2>
+- Production: push a tag with the pattern `/^v-[0-9]+\.[0-9]+.*$/`, e.g. `v0.1`
+- Staging: push a tag with the pattern `/^stg-v[0-9]+\.[0-9]+.*$/`, e.g. `stg-v0.1`
 
 ### Manual <a name="service-deployment-manual"></a>
 
