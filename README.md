@@ -359,7 +359,7 @@ and then its [CI pipeline](./.gitlab-ci.yml) will be run for deploying the app.
 
 The application can be deployed to the following environments:
 
-- Production: push a tag with the pattern `/^v-[0-9]+\.[0-9]+.*$/`, e.g. `v0.1`
+- Production: push a tag with the pattern `/^v[0-9]+\.[0-9]+.*$/`, e.g. `v0.1`
 - Staging: push a tag with the pattern `/^stg-v[0-9]+\.[0-9]+.*$/`, e.g. `stg-v0.1`
 
 ### Manual <a name="service-deployment-manual"></a>
