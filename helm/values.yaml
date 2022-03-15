@@ -63,7 +63,7 @@ common:
   service:
     type: ClusterIP
     port: 80
-    containerPort: {{ .Values.env.APP_PORT }}
+    containerPort: {{ .Values.env.PORT }}
 
   # ingress:
   #   enabled: true
@@ -113,7 +113,7 @@ common:
     timeoutSeconds: 1
     httpGet:
       path: /ping
-      port: {{ .Values.env.APP_PORT }}
+      port: {{ .Values.env.PORT }}
     periodSeconds: 10
 
   readinessProbe:
@@ -123,7 +123,7 @@ common:
     timeoutSeconds: 1
     httpGet:
       path: /ping
-      port: {{ .Values.env.APP_PORT }}
+      port: {{ .Values.env.PORT }}
     periodSeconds: 10
 
 
