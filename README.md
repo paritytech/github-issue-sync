@@ -70,8 +70,7 @@ which is started by the [main entrypoint](./src/server/main.ts); consult the
 
 It is composed of
 
-- A web server for receiving GitHub [Webhook events](#sync-events) via HTTP
-  POST
+- A web server for receiving GitHub [Webhook events](#sync-events) via HTTP POST
 - A database for storing [Rules](#service-api-create-rule)
 
 ## API <a name="service-api"></a>
