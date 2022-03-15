@@ -52,8 +52,6 @@ install-deps:
     expire_in:                     1 hour
     paths:
       - ./node_modules
-  tags:
-    - kubernetes-parity-build
 
 lint:
   <<:                              *common-refs
