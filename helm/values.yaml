@@ -62,7 +62,7 @@ common:
   service:
     type: ClusterIP
     port: 80
-    containerPort: 3000 # Keep this value updated with APP_PORT from .gitlab-ci.yml
+    containerPort: 3000
 
   # ingress:
   #   enabled: true
@@ -112,7 +112,7 @@ common:
     timeoutSeconds: 1
     httpGet:
       path: /ping
-      port: 3000 # Keep this value updated with APP_PORT from .gitlab-ci.yml
+      port: 3000
     periodSeconds: 10
 
   readinessProbe:
@@ -122,7 +122,7 @@ common:
     timeoutSeconds: 1
     httpGet:
       path: /ping
-      port: 3000 # Keep this value updated with APP_PORT from .gitlab-ci.yml
+      port: 3000
     periodSeconds: 10
 
 
