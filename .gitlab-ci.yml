@@ -3,8 +3,18 @@ stages:
   - lint
   - test
   - build
-  - staging
-  - production
+  - deploy
+
+variables:                         &default-vars
+  CI_IMAGE:                        "node:16.10"
+  APP_PORT:                        3000
+  DEPLOYMENT_IMAGE_REGISTRY:       docker.io/paritytech/github-issue-sync
+  DEPLOYMENT_TAG:                  $CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
+  # Vault Section
+  VAULT_ADDR:                      https://vault.parity-mgmt-vault.parity.io
+  VAULT_AUTH_PATH:                 gitlab-parity-io-jwt
+  VAULT_AUTH_ROLE:                 cicd_gitlab_parity_${CI_PROJECT_NAME}
+  HELM_SECRETS_DRIVER:             vals
 
 default:
   retry:
@@ -16,62 +26,28 @@ default:
   interruptible:                   true
   tags:
     - kubernetes-parity-build
-  image:                           $CI_IMAGE_TAG
-
-variables:                         &default-vars
-  CI_IMAGE:                        "node:16.10"
-  DOCKERFILE:                      Dockerfile
-  IMAGE_NAME:                      docker.io/paritytech/github-issue-sync
-  CI_IMAGE_TAG:                    "node:16.10"
-  APP_PORT:                        3000
-  # Vault Section
-  VAULT_ADDR:                      "https://vault.parity-mgmt-vault.parity.io"
-  VAULT_AUTH_PATH:                 "gitlab-parity-io-jwt"
-  VAULT_AUTH_ROLE:                 "cicd_gitlab_parity_${CI_PROJECT_NAME}"
-  HELM_SECRETS_DRIVER:             vals
+  image:                           $CI_IMAGE
 
 .common-refs:                      &common-refs
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_COMMIT_REF_NAME == "master"
-    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                         # PRs
+    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                 # PRs
 
-.test-refs:                        &test-refs
+.staging-refs:                     &staging-refs
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                         # PRs
+    - if: $CI_COMMIT_REF_NAME =~ /^stg-v[0-9]+\.[0-9]+.*$/  # e.g. stg-v0.1
 
-.publish-refs:                     &publish-refs
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_COMMIT_REF_NAME == "master"
-    - if: $CI_COMMIT_REF_NAME =~ /^v[0-9]+\.[0-9]+.*$/              # i.e. v1.0, v2.1rc1
-    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/ 
-
-# Run deploy to production only on tag
 .production-refs:                  &production-refs
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_COMMIT_REF_NAME =~ /^v[0-9]+\.[0-9]+.*$/              # i.e. v1.0, v2.1rc1
-    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/ 
+    - if: $CI_COMMIT_REF_NAME =~ /^v[0-9]+\.[0-9]+.*$/      # e.g. v0.1
 
-.kubernetes-env:                   &kubernetes-env
-  image:                           $CI_IMAGE
-  tags:
-    - kubernetes-parity-build
-
-# fix
-.install-deps:
+install-deps:
   <<:                              *common-refs
   stage:                           install_deps
   script:
     - yarn
   artifacts:
-    name:                          "${CI_JOB_ID}_${CI_COMMIT_REF_NAME}"
+    name:                          install-deps_$CI_PIPELINE_ID
     when:                          on_success
     expire_in:                     1 hour
     paths:
@@ -80,61 +56,57 @@ variables:                         &default-vars
     - kubernetes-parity-build
 
 lint:
-  stage:                           lint
-  <<:                              *kubernetes-env
   <<:                              *common-refs
+  stage:                           lint
   script:
+    # TODO: Use pre-commit run --all
     - echo "lint"
 
-test:
-  stage:                           test
-  <<:                              *kubernetes-env
-  <<:                              *common-refs
-  script:
-    - echo "test"
-
 security-scan:
-  stage:                           test
-  <<:                              *kubernetes-env
   <<:                              *common-refs
-  variables:
-    CI_IMAGE:                      "aquasec/trivy:latest"
+  stage:                           test
+  image:                           aquasec/trivy:latest
   script:
-    #- trivy fs --exit-code 1 .
     - trivy fs .
 
 # template task for building and pushing an image
 .build-push-docker-image:          &build-push-docker-image
-  <<:                              *kubernetes-env
+  stage:                           build
   image:                           quay.io/buildah/stable
   script:
-    - export VERSION=${CI_COMMIT_SHORT_SHA}
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
         ( echo "no docker credentials provided"; exit 1 )
     - buildah bud
         --format=docker
-        --build-arg VCS_REF="${CI_COMMIT_SHA}"
+        --build-arg VCS_REF="$CI_COMMIT_SHA"
         --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        --build-arg VERSION="$VERSION"
+        --build-arg VERSION="$DEPLOYMENT_TAG"
         --build-arg PORT="$APP_PORT"
-        --tag "$IMAGE_NAME:$VERSION"
-        --tag "$IMAGE_NAME:latest"
-        --file "src/server/$DOCKERFILE" .
+        --tag "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
+        --file src/server/Dockerfile .
     - echo "$Docker_Hub_Pass_Parity" |
         buildah login --username "$Docker_Hub_User_Parity" --password-stdin docker.io
     - buildah info
-    - buildah push --format=v2s2 "$IMAGE_NAME:$VERSION"
-    - buildah push --format=v2s2 "$IMAGE_NAME:latest"
+    - buildah push --format=v2s2 "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
   after_script:
     - buildah logout --all
 
-build-push:
-  stage:                           build
-  <<:                              *publish-refs
+build-staging:
+  <<:                              *staging-refs
   <<:                              *build-push-docker-image
+  environment:
+    name:                          parity-prod
+
+build-production:
+  <<:                              *production-refs
+  <<:                              *build-push-docker-image
+  environment:
+    name:                          parity-stg
 
 # Deploy to Kubernetes
-.deploy:                  &deploy-k8s
+.deploy-k8s:                       &deploy-k8s
+  stage:                           deploy
+  image:                           "paritytech/kubetools:3.5.3"
   script:
     # https://docs.gitlab.com/ee/ci/examples/authenticating-with-hashicorp-vault/#example
     - export VAULT_TOKEN="$(vault write -field=token auth/$VAULT_AUTH_PATH/login role=$VAULT_AUTH_ROLE jwt=$CI_JOB_JWT)"
@@ -145,29 +117,24 @@ build-push:
         --timeout 300s
         --namespace github-issue-sync
         --values helm/$VALUES_FILE
-        --set common.image.tag="$CI_COMMIT_SHORT_SHA"
+        --set common.image.tag="$DEPLOYMENT_TAG"
+        --set common.containerPort="$APP_PORT"
+        --set common.livenessProbe.httpGet.port="$APP_PORT"
+        --set common.readinessProbe.httpGet.port="$APP_PORT"
         github-issue-sync helm/
 
 deploy-staging:
+  <<:                              *staging-refs
+  <<:                              *deploy-k8s
   variables:
-    CI_IMAGE:    "paritytech/kubetools:3.5.3"
-    VALUES_FILE: "values-stg.yaml"
-  stage:         staging
+    VALUES_FILE:                   values-stg.yaml
   environment:
-    name:        parity-stg
-  <<:            *kubernetes-env
-  <<:            *publish-refs
-  <<:            *deploy-k8s
-  
+    name:                          parity-stg
 
-# FIX ME
-.deploy-production:
+deploy-production:
+  <<:                              *production-refs
+  <<:                              *deploy-k8s
   variables:
-    CI_IMAGE:    "paritytech/kubetools:3.5.3"
-    VALUES_FILE: "values-prod.yaml"
-  stage:         production
+    VALUES_FILE:                   values-prod.yaml
   environment:
-    name:        parity-prod
-  <<:            *kubernetes-env
-  <<:            *production-refs
-  <<:            *deploy-k8s
+    name:                          parity-prod
