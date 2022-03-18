@@ -357,7 +357,7 @@ export const setupApi = (
       }
       const params = reqParamsValidation.value
 
-      const { rows } = await database.wrap(async (client) => {
+      const { rows } = await database.wrap((client) => {
         return client.query(
           `
           SELECT *
