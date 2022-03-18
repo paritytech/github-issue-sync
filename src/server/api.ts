@@ -346,6 +346,34 @@ export const setupApi = (
     },
   )
 
+  setupRoute(
+    "get",
+    ApiVersion.v1,
+    routes.issueToProjectField.byRepository,
+    async ({ ok, err, reqParamsValidator, req }) => {
+      const reqParamsValidation = reqParamsValidator.validate(req.params)
+      if (reqParamsValidation.error) {
+        return err(422, reqParamsValidation.error)
+      }
+      const params = reqParamsValidation.value
+
+      const { rows } = await database.wrap((client) => {
+        return client.query(
+          `
+          SELECT *
+          FROM ${table.issue_to_project_field_rule}
+          WHERE
+            github_owner = $1 AND
+            github_name = $2
+          `,
+          [params.owner, params.name],
+        )
+      })
+
+      ok(200, rows)
+    },
+  )
+
   const issueToProjectFieldRuleUpdateSchema = Joi.object<
     ToOptional<Omit<IssueToProjectFieldRule, "id">>
   >().keys({
