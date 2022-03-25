@@ -504,3 +504,4 @@ The [sync](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e38
     [`main`](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/server/main.ts#L97)
 - [CLI entrypoint](https://github.com/paritytech/github-issue-sync/blob/8cb4184ab4d52e387922fb185e17236321399c85/src/action/main.ts#L33)
   for the [GitHub Action](#github-acttion)
+
