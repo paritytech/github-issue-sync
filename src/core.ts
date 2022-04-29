@@ -4,37 +4,27 @@ import Joi from "joi"
 
 import { Issue } from "./types"
 
-export const syncIssue = async ({
-  issue,
-  graphql: gql,
-  project,
-  organization,
-}: {
-  issue: Issue
-  graphql: typeof OctokitGraphQL
-  project: { number: number; targetField: string; targetValue: string }
-  organization: string
-}) => {
-  /*
-
-    Step: Fetch the project's data so that we'll be able to create an item on it
-    for the issue given as input
-
-  */
-  const projectData = await gql<{
-    organization: {
-      projectNext: {
-        id: string
-        fields: {
-          nodes: {
-            id: string
-            name: string
-            settings?: string | null
-          }[]
-        }
+type ProjectData = {
+  organization: {
+    projectNext: {
+      id: string
+      fields: {
+        nodes: {
+          id: string
+          name: string
+          settings?: string | null
+        }[]
       }
     }
-  }>(
+  }
+}
+
+const fetchProjectData: (params: {
+  gql: typeof OctokitGraphQL
+  organization: string
+  number: number
+}) => Promise<ProjectData> = ({ gql, organization, number }) => {
+  return gql<ProjectData>(
     `
     query($organization: String!, $number: Int!) {
       organization(login: $organization){
@@ -51,29 +41,34 @@ export const syncIssue = async ({
       }
     }
   `,
-    { organization, number: project.number },
+    { organization, number },
   )
+}
 
-  /*
+const resolveProjectTargetField: (params: {
+  projectData: ProjectData
+  targetField: string
+  targetValue: string
+}) => { targetFieldId: string; targetValueId: string } = ({
+  projectData,
+  targetField,
+  targetValue,
+}) => {
+  const targetFieldNode =
+    projectData.organization.projectNext.fields.nodes.find(
+      ({ name }) => name === targetField,
+    )
 
-    Step: Find the target field which we were given as input
-
-  */
-  const targetField = projectData.organization.projectNext.fields.nodes.find(
-    ({ name }) => {
-      return name === project.targetField
-    },
-  )
   assert(
-    targetField,
-    `No field named "${project.targetField}" was found in the project`,
+    targetFieldNode,
+    `No field named "${targetField}" was found in the project`,
   )
 
   assert(
-    targetField.settings,
-    `Settings for the field "${project.targetField}" are empty`,
+    targetFieldNode.settings,
+    `Settings for the field "${targetField}" are empty`,
   )
-  const parsedSettings = JSON.parse(targetField.settings)
+  const parsedSettings = JSON.parse(targetFieldNode.settings)
 
   const settingsValidator = Joi.object<{
     options: [{ id: string; name: string }]
@@ -91,28 +86,30 @@ export const syncIssue = async ({
   assert(settingsResult.error === undefined, settingsResult.error)
   const { value: settings } = settingsResult
 
-  /*
-
-    Step: Find the target value given as input in the possible values for the
-    target field
-
-  */
-  const targetValue = settings.options.find(({ name }) => {
-    return name === project.targetValue
+  const targetValueNode = settings.options.find(({ name }) => {
+    return name === targetValue
   })
   assert(
-    targetValue,
-    `No value named "${project.targetValue}" was found for the "${project.targetField}" field`,
+    targetValueNode,
+    `No value named "${targetValue}" was found for the "${targetField}" field`,
   )
 
-  /*
+  return {
+    targetFieldId: targetFieldNode.id,
+    targetValueId: targetValueNode.id,
+  }
+}
 
-    Step: Create an item for the issue in the board
+type CreateItemResult = {
+  addProjectNextItem: { projectNextItem: { id: string } }
+}
 
-  */
-  const createItemResult = await gql<{
-    addProjectNextItem: { projectNextItem: { id: string } }
-  }>(
+const createItem: (params: {
+  gql: typeof OctokitGraphQL
+  projectId: string
+  issueNodeId: string
+}) => Promise<CreateItemResult> = ({ gql, projectId, issueNodeId }) => {
+  return gql<CreateItemResult>(
     `
     mutation($project: ID!, $issue: ID!) {
       addProjectNextItem(input: {projectId: $project, contentId: $issue}) {
@@ -122,16 +119,23 @@ export const syncIssue = async ({
       }
     }
   `,
-    { project: projectData.organization.projectNext.id, issue: issue.nodeId },
+    { project: projectId, issue: issueNodeId },
   )
+}
 
-  /*
-
-    Step: Assign the issue to the target field and value we were given as input
-    Apparently it's not (yet?) possible to provide this assignment in the
-    initial mutation, hence why two separate requests are made.
-
-  */
+const updateProjectNextItemField: (params: {
+  gql: typeof OctokitGraphQL
+  project: string
+  item: string
+  targetField: string
+  targetFieldValue: string
+}) => Promise<void> = async ({
+  gql,
+  project,
+  item,
+  targetField,
+  targetFieldValue,
+}) => {
   await gql(
     `
     mutation (
@@ -152,11 +156,54 @@ export const syncIssue = async ({
       }
     }
   `,
-    {
+    { project, item, targetField, targetFieldValue },
+  )
+}
+
+export const syncIssue = async ({
+  issue,
+  graphql: gql,
+  project,
+  organization,
+}: {
+  issue: Issue
+  graphql: typeof OctokitGraphQL
+  project: { number: number; targetField?: string; targetValue?: string }
+  organization: string
+}) => {
+  const projectData = await fetchProjectData({
+    gql,
+    organization,
+    number: project.number,
+  })
+
+  const targetField =
+    project.targetField && project.targetValue
+      ? resolveProjectTargetField({
+          projectData,
+          targetField: project.targetField,
+          targetValue: project.targetValue,
+        })
+      : null
+
+  const createItemResult = await createItem({
+    gql,
+    projectId: projectData.organization.projectNext.id,
+    issueNodeId: issue.nodeId,
+  })
+
+  if (targetField !== null) {
+    /*
+      Assign the issue to the target field and value we were given as input
+      Apparently it's not (yet?) possible to provide this assignment in the
+      initial mutation, hence why two separate requests are made.
+    */
+    await updateProjectNextItemField({
+      gql,
       project: projectData.organization.projectNext.id,
       item: createItemResult.addProjectNextItem.projectNextItem.id,
-      targetField: targetField.id,
-      targetFieldValue: targetValue.id,
-    },
-  )
+      targetField: targetField.targetFieldId,
+      targetFieldValue: targetField.targetValueId,
+    })
+  }
 }

@@ -12,6 +12,7 @@ import { Context, IssueToProjectFieldRule } from "./types"
 enum ApiVersion {
   v1 = "v1",
 }
+
 const getApiRoute = (version: ApiVersion, route: string) => {
   return `/api/${version}/${route}`
 }
@@ -286,10 +287,15 @@ export const setupApi = (
     >
   >().keys({
     project_number: Joi.number().required(),
-    project_field: Joi.string().required(),
-    project_field_value: Joi.string().required(),
+    project_field: Joi.string(),
+    project_field_value: Joi.string().when("project_field", {
+      is: Joi.exist(),
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
     filter: Joi.string(),
   })
+
   setupRoute(
     "post",
     ApiVersion.v1,
