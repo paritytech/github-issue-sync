@@ -27,8 +27,8 @@ export type Context = {
 
 type IssueToProjectFieldRuleCreationInput = {
   project_number: number
-  project_field: string
-  project_field_value: string
+  project_field: string | null
+  project_field_value: string | null
   filter?: string | null
 }
 type IssueToProjectFieldRuleUpdateInput =
