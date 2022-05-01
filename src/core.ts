@@ -100,16 +100,20 @@ const resolveProjectTargetField: (params: {
   }
 }
 
-type CreateItemResult = {
+type CreatedProjectItemForIssue = {
   addProjectNextItem: { projectNextItem: { id: string } }
 }
 
-const createItem: (params: {
+const createProjectItemForIssue: (params: {
   gql: typeof OctokitGraphQL
   projectId: string
   issueNodeId: string
-}) => Promise<CreateItemResult> = ({ gql, projectId, issueNodeId }) => {
-  return gql<CreateItemResult>(
+}) => Promise<CreatedProjectItemForIssue> = ({
+  gql,
+  projectId,
+  issueNodeId,
+}) => {
+  return gql<CreatedProjectItemForIssue>(
     `
     mutation($project: ID!, $issue: ID!) {
       addProjectNextItem(input: {projectId: $project, contentId: $issue}) {
@@ -186,7 +190,7 @@ export const syncIssue = async ({
         })
       : null
 
-  const createItemResult = await createItem({
+  const createdProjectItemForIssue = await createProjectItemForIssue({
     gql,
     projectId: projectData.organization.projectNext.id,
     issueNodeId: issue.nodeId,
@@ -201,7 +205,7 @@ export const syncIssue = async ({
     await updateProjectNextItemField({
       gql,
       project: projectData.organization.projectNext.id,
-      item: createItemResult.addProjectNextItem.projectNextItem.id,
+      item: createdProjectItemForIssue.addProjectNextItem.projectNextItem.id,
       targetField: targetField.targetFieldId,
       targetFieldValue: targetField.targetValueId,
     })
