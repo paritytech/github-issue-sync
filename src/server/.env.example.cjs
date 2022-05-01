@@ -35,7 +35,7 @@ process.env.DB_HOST ??= "localhost"
 process.env.DB_PORT ??= 5432
 process.env.DB_NAME ??= "placeholder"
 // DATABASE_URL is useful for the migrations CLI
-process.env.DATABASE_URL = `${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
+process.env.DATABASE_URL = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
 
 // Set the key for managing the API
 process.env.API_CONTROL_TOKEN ??= "placeholder"
