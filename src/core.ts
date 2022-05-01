@@ -133,14 +133,14 @@ const updateProjectNextItemField: (params: {
   item: string
   targetField: string
   targetFieldValue: string
-}) => Promise<void> = async ({
+}) => Promise<void> = ({
   gql,
   project,
   item,
   targetField,
   targetFieldValue,
 }) => {
-  await gql(
+  return gql(
     `
     mutation (
       $project: ID!
