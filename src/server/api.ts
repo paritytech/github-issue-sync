@@ -317,7 +317,7 @@ export const setupApi = (
           },
         ],
       }),
-    filter: Joi.string(),
+    filter: Joi.string().allow(null),
   }
 
   const issueToProjectFieldRuleCreationSchema = Joi.object<
