@@ -280,50 +280,65 @@ export const setupApi = (
     },
   )
 
-  const commonIssueToProjectFieldRuleCreationSchemaKeys = {
-    project_field: Joi.string()
-      .allow(null)
-      .when("..", {
-        switch: [
-          {
-            is: Joi.object()
-              .keys({ project_field_value: Joi.valid(null).required() })
-              .options({ allowUnknown: true }),
-            then: Joi.valid(null).required(),
-          },
-          {
-            is: Joi.object()
-              .keys({ project_field_value: Joi.string().required() })
-              .options({ allowUnknown: true }),
-            then: Joi.string().required(),
-          },
-        ],
-      }),
-    project_field_value: Joi.string()
-      .allow(null)
-      .when("..", {
-        switch: [
-          {
-            is: Joi.object()
-              .keys({ project_field: Joi.valid(null).required() })
-              .options({ allowUnknown: true }),
-            then: Joi.valid(null).required(),
-          },
-          {
-            is: Joi.object()
-              .keys({ project_field: Joi.string().required() })
-              .options({ allowUnknown: true }),
-            then: Joi.string().required(),
-          },
-        ],
-      }),
-    filter: Joi.string().allow(null),
+  const getCommonIssueToProjectFieldRuleCreationSchemaKeys = ({
+    operation,
+  }: {
+    operation: "insert" | "update"
+  }) => {
+    const schema = {
+      project_field: Joi.string()
+        .allow(null)
+        .when("..", {
+          switch: [
+            {
+              is: Joi.object()
+                .keys({ project_field_value: Joi.valid(null).required() })
+                .options({ allowUnknown: true }),
+              then: Joi.valid(null).required(),
+            },
+            {
+              is: Joi.object()
+                .keys({ project_field_value: Joi.string().required() })
+                .options({ allowUnknown: true }),
+              then: Joi.string().required(),
+            },
+          ],
+        }),
+      project_field_value: Joi.string()
+        .allow(null)
+        .when("..", {
+          switch: [
+            {
+              is: Joi.object()
+                .keys({ project_field: Joi.valid(null).required() })
+                .options({ allowUnknown: true }),
+              then: Joi.valid(null).required(),
+            },
+            {
+              is: Joi.object()
+                .keys({ project_field: Joi.string().required() })
+                .options({ allowUnknown: true }),
+              then: Joi.string().required(),
+            },
+          ],
+        }),
+      filter: Joi.string().allow(null),
+    }
+
+    if (operation === "insert") {
+      schema.project_field = schema.project_field.required()
+      schema.project_field_value = schema.project_field.required()
+    }
+
+    return schema
   }
 
   const issueToProjectFieldRuleCreationSchema = Joi.object<
     Omit<IssueToProjectFieldRule, "id">
   >().keys({
-    ...commonIssueToProjectFieldRuleCreationSchemaKeys,
+    ...getCommonIssueToProjectFieldRuleCreationSchemaKeys({
+      operation: "insert",
+    }),
     project_number: Joi.number().required(),
   })
 
@@ -409,7 +424,9 @@ export const setupApi = (
   const issueToProjectFieldRuleUpdateSchema = Joi.object<
     ToOptional<Omit<IssueToProjectFieldRule, "id">>
   >().keys({
-    ...commonIssueToProjectFieldRuleCreationSchemaKeys,
+    ...getCommonIssueToProjectFieldRuleCreationSchemaKeys({
+      operation: "update",
+    }),
     github_owner: Joi.string(),
     github_name: Joi.string(),
     project_number: Joi.number(),
