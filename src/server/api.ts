@@ -280,20 +280,71 @@ export const setupApi = (
     },
   )
 
+  /*
+     For project_field and project_field_value, having the schema organized this
+     way yields better error messages than Joi.alternative()
+  */
+  const commonIssueToProjectFieldRuleCreationSchemaKeys = {
+    project_field: Joi.string()
+      .allow(null)
+      /*
+        We use ".." (the reference to the shared parent object of project_field
+        and project_field since they're both on the same level in the payload's
+        hierarchy) here because project_field and project_field_value value
+        depend on one another, but Joi doesn't support circular references
+      */
+      .when("..", {
+        switch: [
+          // If project_field_value is null, project_field should also be null
+          {
+            is: Joi.object()
+              .keys({ project_field_value: Joi.valid(null).required() })
+              .options({ allowUnknown: true }),
+            then: Joi.valid(null).required(),
+          },
+          {
+            // If project_field_value is a string, project_field should also be a string
+            is: Joi.object()
+              .keys({ project_field_value: Joi.string().required() })
+              .options({ allowUnknown: true }),
+            then: Joi.string().required(),
+          },
+        ],
+      }),
+    project_field_value: Joi.string()
+      .allow(null)
+      /*
+         We use ".." (the reference to the shared parent object of project_field
+         and project_field since they're both on the same level in the payload's
+         hierarchy) here because project_field and project_field_value value
+         depend on one another, but Joi doesn't support circular references
+      */
+      .when("..", {
+        switch: [
+          // If project_field is null, project_field_value should also be null
+          {
+            is: Joi.object()
+              .keys({ project_field: Joi.valid(null).required() })
+              .options({ allowUnknown: true }),
+            then: Joi.valid(null).required(),
+          },
+          {
+            // If project_field is a string, project_field_value should also be a string
+            is: Joi.object()
+              .keys({ project_field: Joi.string().required() })
+              .options({ allowUnknown: true }),
+            then: Joi.string().required(),
+          },
+        ],
+      }),
+    filter: Joi.string().allow(null),
+  }
+
   const issueToProjectFieldRuleCreationSchema = Joi.object<
-    Pick<
-      IssueToProjectFieldRule,
-      "project_number" | "project_field" | "project_field_value" | "filter"
-    >
+    Omit<IssueToProjectFieldRule, "id">
   >().keys({
+    ...commonIssueToProjectFieldRuleCreationSchemaKeys,
     project_number: Joi.number().required(),
-    project_field: Joi.string(),
-    project_field_value: Joi.string().when("project_field", {
-      is: Joi.exist(),
-      then: Joi.required(),
-      otherwise: Joi.forbidden(),
-    }),
-    filter: Joi.string(),
   })
 
   setupRoute(
@@ -315,23 +366,18 @@ export const setupApi = (
       }
 
       const { value: payload } = bodyValidation
-      const inputParams: DynamicQueryParam[] = []
-      for (const [column, value] of Object.entries(payload)) {
-        if (
-          value === null ||
-          (typeof value === "string" && value.length === 0)
-        ) {
-          continue
-        }
-        inputParams.push({ column, value })
-      }
-      if (inputParams.length === 0) {
+      const queryParams: DynamicQueryParam[] = Object.entries(payload).map(
+        ([column, value]) => {
+          return { column, value }
+        },
+      )
+      if (queryParams.length === 0) {
         return err(422, "Should provide at least one column")
       }
 
       const rowCount = await database.wrapForDynamicQuery(
         [
-          ...inputParams,
+          ...queryParams,
           { column: "github_owner", value: params.owner },
           { column: "github_name", value: params.name },
         ],
@@ -383,12 +429,10 @@ export const setupApi = (
   const issueToProjectFieldRuleUpdateSchema = Joi.object<
     ToOptional<Omit<IssueToProjectFieldRule, "id">>
   >().keys({
+    ...commonIssueToProjectFieldRuleCreationSchemaKeys,
     github_owner: Joi.string(),
     github_name: Joi.string(),
     project_number: Joi.number(),
-    project_field: Joi.string(),
-    project_field_value: Joi.string(),
-    filter: Joi.string(),
   })
   setupRoute(
     "patch",
@@ -413,22 +457,17 @@ export const setupApi = (
       }
 
       const { value: payload } = bodyValidation
-      const inputParams: DynamicQueryParam[] = []
-      for (const [column, value] of Object.entries(payload)) {
-        if (
-          value === null ||
-          (typeof value === "string" && value.length === 0)
-        ) {
-          continue
-        }
-        inputParams.push({ column, value })
-      }
-      if (inputParams.length === 0) {
+      const queryParams: DynamicQueryParam[] = Object.entries(payload).map(
+        ([column, value]) => {
+          return { column, value }
+        },
+      )
+      if (queryParams.length === 0) {
         return err(422, "Should provide at least one column")
       }
 
       const { rows, rowCount } = await database.wrapForDynamicQuery(
-        inputParams,
+        queryParams,
         async (client, { updateStatementParamsJoined, values }) => {
           const { rows, rowCount } = await client.query(
             `

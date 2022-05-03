@@ -79,8 +79,8 @@ export const setupBotEvents = (ctx: Context) => {
             graphql: octokit.graphql,
             project: {
               number: rule.project_number,
-              targetField: rule.project_field,
-              targetValue: rule.project_field_value,
+              targetField: rule.project_field ?? null,
+              targetValue: rule.project_field_value ?? null,
             },
             organization: rule.github_owner,
           })

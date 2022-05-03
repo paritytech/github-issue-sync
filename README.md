@@ -97,7 +97,11 @@ retrieved at any point by using the [listing endpoint](#service-api-list-rules).
 #### Unfiltered Rule <a name="service-api-unfiltered-rule"></a>
 
 If a Rule is specified with no filter, **any** issue associated with the
-[incoming events](#sync-events) will be registered to the board.
+[incoming events](#sync-events) will be registered to the board. As noted by
+[`IssueToProjectFieldRuleCreationInput`](./src/server/types.ts),
+`"project_field"` and `"project_field_value"` can be (both) nullable, in which
+case the issue would be created to the board but no custom field would be
+assigned to it.
 
 ```
 curl \

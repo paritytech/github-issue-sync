@@ -172,7 +172,11 @@ export const syncIssue = async ({
 }: {
   issue: Issue
   graphql: typeof OctokitGraphQL
-  project: { number: number; targetField?: string; targetValue?: string }
+  project: {
+    number: number
+    targetField: string | null
+    targetValue: string | null
+  }
   organization: string
 }) => {
   const projectData = await fetchProjectData({

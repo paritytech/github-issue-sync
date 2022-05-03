@@ -1,8 +1,10 @@
 import type { MigrationBuilder } from "node-pg-migrate"
 
-const issueToProjectFieldRuleTable = "issue_to_project_field_rule"
-const projectField = "project_field"
-const projectFieldValue = "project_field_value"
+import {
+  issueToProjectFieldRuleTable,
+  projectField,
+  projectFieldValue,
+} from "./1645593356645_issue_to_project_field_rule"
 
 export const up = async (pgm: MigrationBuilder) => {
   pgm.alterColumn(issueToProjectFieldRuleTable, projectField, {
@@ -15,9 +17,9 @@ export const up = async (pgm: MigrationBuilder) => {
 
 export const down = async (pgm: MigrationBuilder) => {
   pgm.sql(`
-    DELETE FROM ${issueToProjectFieldRuleTable} 
-    WHERE 
-      ${projectField} IS NULL 
+    DELETE FROM ${issueToProjectFieldRuleTable}
+    WHERE
+      ${projectField} IS NULL
       OR ${projectFieldValue} IS NULL
   `)
   pgm.alterColumn(issueToProjectFieldRuleTable, projectField, {
