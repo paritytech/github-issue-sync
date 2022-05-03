@@ -25,7 +25,7 @@ export type Context = {
   }
 }
 
-export type IssueToProjectFieldRuleCreationInput = {
+type IssueToProjectFieldRuleCreationInput = {
   project_number: number
   project_field: string | null
   project_field_value: string | null
