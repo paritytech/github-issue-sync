@@ -283,8 +283,15 @@ export const setupApi = (
   const commonIssueToProjectFieldRuleCreationSchemaKeys = {
     project_field: Joi.string()
       .allow(null)
+      /*
+        We use ".." (the reference to the shared parent object of project_field
+        and project_field since they're both on the same level in the payload's
+        hierarchy) here because project_field and project_field_value value
+        depend on one another, but Joi doesn't support circular references
+      */
       .when("..", {
         switch: [
+          // If project_field_value is null, project_field should also be null
           {
             is: Joi.object()
               .keys({ project_field_value: Joi.valid(null).required() })
@@ -292,6 +299,7 @@ export const setupApi = (
             then: Joi.valid(null).required(),
           },
           {
+            // If project_field_value is a string, project_field should also be a string
             is: Joi.object()
               .keys({ project_field_value: Joi.string().required() })
               .options({ allowUnknown: true }),
@@ -301,8 +309,15 @@ export const setupApi = (
       }),
     project_field_value: Joi.string()
       .allow(null)
+      /*
+         We use ".." (the reference to the shared parent object of project_field
+         and project_field since they're both on the same level in the payload's
+         hierarchy) here because project_field and project_field_value value
+         depend on one another, but Joi doesn't support circular references
+      */
       .when("..", {
         switch: [
+          // If project_field is null, project_field_value should also be null
           {
             is: Joi.object()
               .keys({ project_field: Joi.valid(null).required() })
@@ -310,6 +325,7 @@ export const setupApi = (
             then: Joi.valid(null).required(),
           },
           {
+            // If project_field is a string, project_field_value should also be a string
             is: Joi.object()
               .keys({ project_field: Joi.string().required() })
               .options({ allowUnknown: true }),
