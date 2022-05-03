@@ -280,6 +280,10 @@ export const setupApi = (
     },
   )
 
+  /*
+     For project_field and project_field_value, having the schema organized this
+     way yields better error messages than Joi.alternative()
+  */
   const commonIssueToProjectFieldRuleCreationSchemaKeys = {
     project_field: Joi.string()
       .allow(null)
