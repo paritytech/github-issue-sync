@@ -29,7 +29,7 @@
     "watch": "nodemon --watch src --ignore src/actions --ignore src/server/migrations -e cjs,ts --exec \"yarn dev\""
   },
   "dependencies": {
-    "@actions/core": "^1.6.0",
+    "@actions/core": "^1.9.1",
     "@actions/github": "^5.0.0",
     "@octokit/auth-app": "^3.6.1",
     "@octokit/core": "^3.5.1",
