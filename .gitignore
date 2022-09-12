@@ -12,3 +12,5 @@ build/*
 
 # yarn
 yarn-error.log
+
+.idea
