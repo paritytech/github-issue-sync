@@ -7,7 +7,7 @@ common:
 
   image:
     repository: paritytech/github-issue-sync
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: "latest"
 
