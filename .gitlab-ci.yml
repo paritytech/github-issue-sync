@@ -75,6 +75,16 @@ security-scan:
   script:
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
         ( echo "no docker credentials provided"; exit 1 )
+    - echo "Log INFO: values for the image that will be built"
+    - echo 
+        buildah bud
+        --format=docker
+        --build-arg VCS_REF="$CI_COMMIT_SHA"
+        --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        --build-arg VERSION="$DEPLOYMENT_TAG"
+        --build-arg PORT="$APP_PORT"
+        --tag "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
+        --file src/server/Dockerfile .
     - buildah bud
         --format=docker
         --build-arg VCS_REF="$CI_COMMIT_SHA"
@@ -110,6 +120,7 @@ build-production:
     # https://docs.gitlab.com/ee/ci/examples/authenticating-with-hashicorp-vault/#example
     - export VAULT_TOKEN="$(vault write -field=token auth/$VAULT_AUTH_PATH/login role=$VAULT_AUTH_ROLE jwt=$CI_JOB_JWT)"
     - helm dependency update helm/
+    - echo "Log INFO: values that will be deployed"
     - helm secrets upgrade
         --install
         --atomic
