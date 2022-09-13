@@ -121,6 +121,18 @@ build-production:
     - export VAULT_TOKEN="$(vault write -field=token auth/$VAULT_AUTH_PATH/login role=$VAULT_AUTH_ROLE jwt=$CI_JOB_JWT)"
     - helm dependency update helm/
     - echo "Log INFO: values that will be deployed"
+    - echo
+        helm secrets upgrade
+        --install
+        --atomic
+        --timeout 300s
+        --namespace github-issue-sync
+        --values helm/$VALUES_FILE
+        --set common.image.tag="$DEPLOYMENT_TAG"
+        --set common.containerPort="$APP_PORT"
+        --set common.livenessProbe.httpGet.port="$APP_PORT"
+        --set common.readinessProbe.httpGet.port="$APP_PORT"
+        github-issue-sync helm/
     - helm secrets upgrade
         --install
         --atomic
