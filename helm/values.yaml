@@ -33,7 +33,7 @@ common:
   # GREETING: "Warm greetings to"
     DB_USER: "github-issue-sync"
     DB_PASSWORD: ""
-    DB_HOST: "cloudsql"
+    DB_HOST: "github-issue-sync-common-cloudsql"
     DB_PORT: "5432"
     DB_NAME: "github-issue-sync"
     LOG_FORMAT: json
