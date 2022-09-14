@@ -6,6 +6,6 @@ version: 0.1.0
 appVersion: "1.16.0"
 dependencies:
 - name: common
-  version: "0.1.1"
+  version: "0.6.3"
   repository: "https://paritytech.github.io/helm-charts/"
 
