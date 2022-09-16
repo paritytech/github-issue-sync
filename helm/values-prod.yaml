@@ -24,11 +24,17 @@ common:
       kubernetes.io/ingress.class: traefik-external
       traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
       traefik.ingress.kubernetes.io/router.tls: "true"
-    hosts:
+    rules:
       - host: github-issue-sync.parity-prod.parity.io
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
+        http:
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              backend:
+                service:
+                  name: github-issue-sync-common
+                  port:
+                    number: 80
     tls:
       - secretName: github-issue-sync.parity-prod.parity.io
         hosts:
