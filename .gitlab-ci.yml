@@ -5,8 +5,9 @@ stages:
   - build
   - deploy
 
-variables:                         &default-vars
+variables:
   CI_IMAGE:                        "node:16.10"
+  BUILDAH_IMAGE:                   "quay.io/buildah/stable:v1.27"
   APP_PORT:                        3000
   DEPLOYMENT_IMAGE_REGISTRY:       docker.io/paritytech/github-issue-sync
   DEPLOYMENT_TAG:                  $CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
@@ -70,7 +71,7 @@ security-scan:
 # template task for building and pushing an image
 .build-push-docker-image:          &build-push-docker-image
   stage:                           build
-  image:                           quay.io/buildah/stable
+  image:                           $BUILDAH_IMAGE
   script:
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
         ( echo "no docker credentials provided"; exit 1 )
