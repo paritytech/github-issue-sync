@@ -62,13 +62,6 @@ lint:
     # TODO: Use pre-commit run --all
     - yarn lint
 
-security-scan:
-  <<:                              *common-refs
-  stage:                           test
-  image:                           aquasec/trivy:latest
-  script:
-    - trivy fs .
-
 # template task for building and pushing an image
 .build-push-docker-image:          &build-push-docker-image
   stage:                           build
