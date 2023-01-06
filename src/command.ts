@@ -1,96 +1,91 @@
-import { spawn } from "child_process"
+import { spawn } from "child_process";
 
-import { Logger } from "./logging"
+import { Logger } from "./logging";
 
 const redactSecrets = function (str: string, secrets: string[] = []) {
   for (const secret of secrets) {
     if (!secret) {
-      continue
+      continue;
     }
-    str = str.replace(secret, "{SECRET}")
+    str = str.replace(secret, "{SECRET}");
   }
-  return str
-}
+  return str;
+};
 
 const displayCommand = function ({
   execPath,
   args,
   secretsToRedact,
 }: {
-  execPath: string
-  args: string[]
-  secretsToRedact: string[]
+  execPath: string;
+  args: string[];
+  secretsToRedact: string[];
 }) {
-  return redactSecrets(`${execPath} ${args.join(" ")}`, secretsToRedact)
-}
+  return redactSecrets(`${execPath} ${args.join(" ")}`, secretsToRedact);
+};
 
 type ExecutorConfiguration = {
-  secretsToRedact: string[]
-  logger: Logger
-  cwd?: string
-}
+  secretsToRedact: string[];
+  logger: Logger;
+  cwd?: string;
+};
 
 export class Executor {
   constructor(private configuration: ExecutorConfiguration) {}
 
-  public run = async (execPath: string, args: string[]): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      const { cwd, secretsToRedact, logger } = this.configuration
+  public run = async (execPath: string, args: string[]): Promise<string> =>
+    await new Promise<string>((resolve, reject) => {
+      const { cwd, secretsToRedact, logger } = this.configuration;
 
-      const commandDisplayed = displayCommand({
-        execPath,
-        args,
-        secretsToRedact,
-      })
-      logger.info(`Executing command ${commandDisplayed}`)
+      const commandDisplayed = displayCommand({ execPath, args, secretsToRedact });
+      logger.info(`Executing command ${commandDisplayed}`);
 
-      const child = spawn(execPath, args, { cwd, stdio: "pipe" })
+      const child = spawn(execPath, args, { cwd, stdio: "pipe" });
       child.on("error", (error) => {
-        reject(error)
-      })
+        reject(error);
+      });
 
-      let stdoutBuf = ""
-      let stderrBuf = ""
+      let stdoutBuf = "";
+      let stderrBuf = "";
       const getStreamHandler = function (channel: "stdout" | "stderr") {
         return function (data: { toString: () => string }) {
-          const str = redactSecrets(data.toString(), secretsToRedact)
-          const strTrim = str.trim()
+          const str = redactSecrets(data.toString(), secretsToRedact);
+          const strTrim = str.trim();
 
           if (strTrim && channel === "stdout") {
-            logger.info(strTrim, channel)
+            logger.info(strTrim, channel);
           }
 
           switch (channel) {
             case "stdout": {
-              stdoutBuf += str
-              break
+              stdoutBuf += str;
+              break;
             }
             case "stderr": {
-              stderrBuf += str
-              break
+              stderrBuf += str;
+              break;
             }
             default: {
-              const exhaustivenessCheck: never = channel
+              const exhaustivenessCheck: never = channel;
               // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-              throw new Error(`Not exhaustive: ${exhaustivenessCheck}`)
+              throw new Error(`Not exhaustive: ${exhaustivenessCheck}`);
             }
           }
-        }
-      }
+        };
+      };
 
-      child.stdout.on("data", getStreamHandler("stdout"))
-      child.stderr.on("data", getStreamHandler("stderr"))
+      child.stdout.on("data", getStreamHandler("stdout"));
+      child.stderr.on("data", getStreamHandler("stderr"));
 
       child.on("close", async (exitCode) => {
-        logger.info({ exitCode }, `Finished command ${commandDisplayed}`)
+        logger.info({ exitCode }, `Finished command ${commandDisplayed}`);
         if (exitCode) {
-          const stderr = redactSecrets(stderrBuf.trim(), secretsToRedact)
-          reject(new Error(stderr))
+          const stderr = redactSecrets(stderrBuf.trim(), secretsToRedact);
+          reject(new Error(stderr));
         } else {
-          const stdout = redactSecrets(stdoutBuf.trim(), secretsToRedact)
-          resolve(stdout)
+          const stdout = redactSecrets(stdoutBuf.trim(), secretsToRedact);
+          resolve(stdout);
         }
-      })
-    })
-  }
+      });
+    });
 }

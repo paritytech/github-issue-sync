@@ -13,10 +13,7 @@ module.exports = {
     {
       ...tsConfOverride,
       files: "{*,**,**/*}.{ts,tsx}",
-      rules: {
-        ...tsConfOverride.rules,
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-      },
+      rules: { ...tsConfOverride.rules, "@typescript-eslint/explicit-module-boundary-types": "off" },
     },
   ],
 };

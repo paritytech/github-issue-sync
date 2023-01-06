@@ -1,8 +1,8 @@
-import type { MigrationBuilder } from "node-pg-migrate"
+import type { MigrationBuilder } from "node-pg-migrate";
 
-export const issueToProjectFieldRuleTable = "issue_to_project_field_rule"
-export const projectField = "project_field"
-export const projectFieldValue = "project_field_value"
+export const issueToProjectFieldRuleTable = "issue_to_project_field_rule";
+export const projectField = "project_field";
+export const projectFieldValue = "project_field_value";
 
 export const up = async (pgm: MigrationBuilder) => {
   pgm.createTable(issueToProjectFieldRuleTable, {
@@ -13,9 +13,9 @@ export const up = async (pgm: MigrationBuilder) => {
     [projectField]: { type: "TEXT", notNull: true },
     [projectFieldValue]: { type: "TEXT", notNull: true },
     filter: { type: "TEXT" },
-  })
-}
+  });
+};
 
 export const down = async (pgm: MigrationBuilder) => {
-  pgm.dropTable(issueToProjectFieldRuleTable)
-}
+  pgm.dropTable(issueToProjectFieldRuleTable);
+};
