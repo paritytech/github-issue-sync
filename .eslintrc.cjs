@@ -13,7 +13,14 @@ module.exports = {
     {
       ...tsConfOverride,
       files: "{*,**,**/*}.{ts,tsx}",
-      rules: { ...tsConfOverride.rules, "@typescript-eslint/explicit-module-boundary-types": "off" },
+      rules: {
+        ...tsConfOverride.rules,
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/switch-exhaustiveness-check": "off",
+      },
     },
   ],
 };

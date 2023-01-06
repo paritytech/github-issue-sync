@@ -12,7 +12,7 @@ import { withDatabaseClientCallback, withDatabaseClientForDynamicQueryCallback }
 import { setupBotEvents } from "./event";
 import { Context } from "./types";
 
-const setupHealthRoute = function (server: Server) {
+const setupHealthRoute = (server: Server) => {
   server.expressApp.get("/health", (_, response) => {
     response.status(200).send();
   });
@@ -35,14 +35,14 @@ export const setup = (
   },
 ) => {
   const appAuth = createAppAuth(conf.github);
-  const getInstallationOctokit = (logger: Logger, installationId: number | undefined) =>
+  const getInstallationOctokit = (loggerInstance: Logger, installationId: number | undefined) =>
     getOctokit(
       new Octokit(),
       async () => {
         const token = (await appAuth({ type: "installation", installationId })).token;
         return { authorization: `Bearer ${token}` };
       },
-      logger,
+      loggerInstance,
     );
 
   const databaseApplicationPool = new pg.Pool(conf.database);

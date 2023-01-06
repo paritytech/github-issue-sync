@@ -20,8 +20,8 @@ const setupEvent = <E extends WebhookEvents>(ctx: Context, eventName: E, handler
 };
 
 export const setupBotEvents = (ctx: Context) => {
-  for (const event of ["issues.opened", "issues.labeled", "issues.reopened"] as const) {
-    setupEvent(ctx, event, async ({ logger }, event) => {
+  for (const issueEvent of ["issues.opened", "issues.labeled", "issues.reopened"] as const) {
+    setupEvent(ctx, issueEvent, async ({ logger }, event) => {
       const { payload } = event;
 
       const rules = await ctx.database.wrap(async (client) => {

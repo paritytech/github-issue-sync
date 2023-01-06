@@ -87,8 +87,8 @@ const main = async () => {
     ...(probotLogger === undefined ? {} : { log: probotLogger.child({ name: "server" }) }),
     webhookProxy: process.env.WEBHOOK_PROXY_URL,
   });
-  await server.load((bot: Probot) =>
-    setup(logger, bot, server, logFormat, {
+  await server.load((probot: Probot) =>
+    setup(logger, probot, server, logFormat, {
       database,
       github: { appId, clientId, clientSecret, privateKey },
       api: { controlToken: apiControlToken },

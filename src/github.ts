@@ -69,25 +69,25 @@ export const getOctokit = (
               logger.error(rateLimitResetHeaderValue, `Header "${rateLimitResetHeader}" could not be parsed as epoch`);
             } else {
               const currentEpoch = Date.now();
-              const waitDuration = resetEpoch - currentEpoch;
-              if (waitDuration < 0) {
+              const durationOfWait = resetEpoch - currentEpoch;
+              if (durationOfWait < 0) {
                 logger.error(
                   { rateLimitResetHeaderValue, resetEpoch, currentEpoch },
                   `Parsed epoch value for "${rateLimitResetHeader}" is smaller than the current date`,
                 );
               } else {
-                logger.info(`Waiting for ${waitDuration}ms until requests can be made again...`);
-                return waitDuration;
+                logger.info(`Waiting for ${durationOfWait}ms until requests can be made again...`);
+                return durationOfWait;
               }
             }
           } /*
             https://docs.github.com/en/rest/guides/best-practices-for-integrators#dealing-with-secondary-rate-limits
           */ else if (response.headers[retryAfterHeader] !== undefined) {
-            const waitDuration = Number(response.headers[retryAfterHeader]) * 1000;
-            if (Number.isNaN(waitDuration)) {
+            const durationOfWait = Number(response.headers[retryAfterHeader]) * 1000;
+            if (Number.isNaN(durationOfWait)) {
               logger.error(retryAfterHeader, `Header "${retryAfterHeader}" could not be parsed as seconds`);
             } else {
-              return waitDuration;
+              return durationOfWait;
             }
           }
         })();

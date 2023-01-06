@@ -10,7 +10,7 @@ type LoggingLevels = keyof typeof LoggingLevel;
 
 export type LogFormat = "json" | "none";
 
-const setFormattedKeyValue = function (source: any, output: any, key: any, previousObjects: unknown[]) {
+const setFormattedKeyValue = (source: any, output: any, key: any, previousObjects: unknown[]) => {
   if (previousObjects.indexOf(source[key]) !== -1) {
     return "[Circular]";
   }
@@ -23,7 +23,7 @@ const setFormattedKeyValue = function (source: any, output: any, key: any, previ
   output[key] = value;
 };
 
-const formatValue = function (value: unknown, previousObjects: unknown[] = []) {
+const formatValue = (value: unknown, previousObjects: unknown[] = []) => {
   if (value === undefined) {
     return value;
   }
@@ -62,8 +62,8 @@ const formatValue = function (value: unknown, previousObjects: unknown[] = []) {
           return { container: iteratorContainer, output: iteratorContainer.items };
         }
 
-        const output = objAsArray === undefined ? {} : [];
-        return { container: output, output };
+        const arrayOutput = objAsArray === undefined ? {} : [];
+        return { container: arrayOutput, output: arrayOutput };
       })();
 
       const sourceObj = objAsArray ?? value;

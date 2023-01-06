@@ -6,12 +6,12 @@ import {
   projectFieldValue,
 } from "./1645593356645_issue_to_project_field_rule";
 
-export const up = async (pgm: MigrationBuilder) => {
+export const up = (pgm: MigrationBuilder) => {
   pgm.alterColumn(issueToProjectFieldRuleTable, projectField, { allowNull: true });
   pgm.alterColumn(issueToProjectFieldRuleTable, projectFieldValue, { allowNull: true });
 };
 
-export const down = async (pgm: MigrationBuilder) => {
+export const down = (pgm: MigrationBuilder) => {
   pgm.sql(`
     DELETE FROM ${issueToProjectFieldRuleTable}
     WHERE
