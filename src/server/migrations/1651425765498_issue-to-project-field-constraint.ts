@@ -8,7 +8,7 @@ import {
 
 const projectFieldBothNullableOrRequiredConstraint = "project_field_both_nullable_or_required";
 
-export const up = async (pgm: MigrationBuilder) => {
+export const up = (pgm: MigrationBuilder) => {
   pgm.addConstraint(
     issueToProjectFieldRuleTable,
     projectFieldBothNullableOrRequiredConstraint,
@@ -19,6 +19,6 @@ export const up = async (pgm: MigrationBuilder) => {
   );
 };
 
-export const down = async (pgm: MigrationBuilder) => {
+export const down = (pgm: MigrationBuilder) => {
   pgm.dropConstraint(issueToProjectFieldRuleTable, projectFieldBothNullableOrRequiredConstraint);
 };

@@ -2,7 +2,7 @@ import type { MigrationBuilder } from "node-pg-migrate";
 
 const tokenTable = "token";
 
-export const up = async (pgm: MigrationBuilder) => {
+export const up = (pgm: MigrationBuilder) => {
   // pgcrypto is a built-in extension which enables gen_random_uuid
   pgm.sql("CREATE EXTENSION IF NOT EXISTS pgcrypto");
 
@@ -12,6 +12,6 @@ export const up = async (pgm: MigrationBuilder) => {
   });
 };
 
-export const down = async (pgm: MigrationBuilder) => {
+export const down = (pgm: MigrationBuilder) => {
   pgm.dropTable(tokenTable);
 };

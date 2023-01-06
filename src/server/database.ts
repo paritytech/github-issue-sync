@@ -58,12 +58,13 @@ export type WithDatabaseClient<T, WrapperContext = undefined> = (
   client: pg.PoolClient,
   context: WrapperContext,
 ) => T | Promise<T>;
-export const withDatabaseClientCallback = function <T, WrapperContext = undefined>(
-  pool: pg.Pool,
-  logger: Logger,
-  getQueryContext: (client: pg.PoolClient) => WrapperContext,
-) {
-  return async (fn: WithDatabaseClient<T, WrapperContext>) => {
+export const withDatabaseClientCallback =
+  <T, WrapperContext = undefined>(
+    pool: pg.Pool,
+    logger: Logger,
+    getQueryContext: (client: pg.PoolClient) => WrapperContext,
+  ) =>
+  async (fn: WithDatabaseClient<T, WrapperContext>) => {
     let result: T | Error;
     const client = await acquirePoolClient(pool, logger)();
     try {
@@ -78,7 +79,6 @@ export const withDatabaseClientCallback = function <T, WrapperContext = undefine
     }
     return result;
   };
-};
 
 export type DynamicQueryParam = {
   column: string;

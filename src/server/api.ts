@@ -99,10 +99,7 @@ export const setupApi = ({ database, logger }: Context, server: Server, configur
     return new Ok(token);
   };
 
-  const setupRoute = function <
-    T extends "post" | "get" | "delete" | "patch",
-    Path extends keyof typeof requestParamValidators,
-  >(
+  const setupRoute = <T extends "post" | "get" | "delete" | "patch", Path extends keyof typeof requestParamValidators>(
     method: T,
     apiVersion: ApiVersion,
     path: Path,
@@ -115,7 +112,8 @@ export const setupApi = ({ database, logger }: Context, server: Server, configur
       token: string;
     }) => Promise<void>,
     options: { checkApiKey?: boolean } = {},
-  ) {
+  ) => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     server.expressApp[method](getApiRoute(apiVersion, path), jsonParserMiddleware, async (req, res) => {
       const tokenValidation = await checkAuthToken(req, options);
       if (!(tokenValidation instanceof Ok)) {
@@ -317,7 +315,7 @@ export const setupApi = ({ database, logger }: Context, server: Server, configur
         return err(422, "Should provide at least one column");
       }
 
-      const rowCount = await database.wrapForDynamicQuery(
+      const rowCountResult = await database.wrapForDynamicQuery(
         [
           ...queryParams,
           { column: "github_owner", value: params.owner },
@@ -336,7 +334,7 @@ export const setupApi = ({ database, logger }: Context, server: Server, configur
         },
       );
 
-      ok(rowCount ? 201 : 404);
+      ok(rowCountResult ? 201 : 404);
     },
   );
 
@@ -403,6 +401,7 @@ export const setupApi = ({ database, logger }: Context, server: Server, configur
     const { rows, rowCount } = await database.wrapForDynamicQuery(
       queryParams,
       async (client, { updateStatementParamsJoined, values }) => {
+        // eslint-disable-next-line @typescript-eslint/no-shadow
         const { rows, rowCount } = await client.query(
           `
             UPDATE ${table.issue_to_project_field_rule}

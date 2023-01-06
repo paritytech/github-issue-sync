@@ -4,7 +4,7 @@ export const issueToProjectFieldRuleTable = "issue_to_project_field_rule";
 export const projectField = "project_field";
 export const projectFieldValue = "project_field_value";
 
-export const up = async (pgm: MigrationBuilder) => {
+export const up = (pgm: MigrationBuilder) => {
   pgm.createTable(issueToProjectFieldRuleTable, {
     id: { type: "SERIAL", primaryKey: true },
     github_owner: { type: "TEXT", notNull: true },
@@ -16,6 +16,6 @@ export const up = async (pgm: MigrationBuilder) => {
   });
 };
 
-export const down = async (pgm: MigrationBuilder) => {
+export const down = (pgm: MigrationBuilder) => {
   pgm.dropTable(issueToProjectFieldRuleTable);
 };

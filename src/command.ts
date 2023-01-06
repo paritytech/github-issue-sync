@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 
 import { Logger } from "./logging";
 
-const redactSecrets = function (str: string, secrets: string[] = []) {
+const redactSecrets = (str: string, secrets: string[] = []) => {
   for (const secret of secrets) {
     if (!secret) {
       continue;
@@ -12,7 +12,7 @@ const redactSecrets = function (str: string, secrets: string[] = []) {
   return str;
 };
 
-const displayCommand = function ({
+const displayCommand = ({
   execPath,
   args,
   secretsToRedact,
@@ -20,9 +20,7 @@ const displayCommand = function ({
   execPath: string;
   args: string[];
   secretsToRedact: string[];
-}) {
-  return redactSecrets(`${execPath} ${args.join(" ")}`, secretsToRedact);
-};
+}) => redactSecrets(`${execPath} ${args.join(" ")}`, secretsToRedact);
 
 type ExecutorConfiguration = {
   secretsToRedact: string[];
@@ -47,37 +45,35 @@ export class Executor {
 
       let stdoutBuf = "";
       let stderrBuf = "";
-      const getStreamHandler = function (channel: "stdout" | "stderr") {
-        return function (data: { toString: () => string }) {
-          const str = redactSecrets(data.toString(), secretsToRedact);
-          const strTrim = str.trim();
+      const getStreamHandler = (channel: "stdout" | "stderr") => (data: { toString: () => string }) => {
+        const str = redactSecrets(data.toString(), secretsToRedact);
+        const strTrim = str.trim();
 
-          if (strTrim && channel === "stdout") {
-            logger.info(strTrim, channel);
-          }
+        if (strTrim && channel === "stdout") {
+          logger.info(strTrim, channel);
+        }
 
-          switch (channel) {
-            case "stdout": {
-              stdoutBuf += str;
-              break;
-            }
-            case "stderr": {
-              stderrBuf += str;
-              break;
-            }
-            default: {
-              const exhaustivenessCheck: never = channel;
-              // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-              throw new Error(`Not exhaustive: ${exhaustivenessCheck}`);
-            }
+        switch (channel) {
+          case "stdout": {
+            stdoutBuf += str;
+            break;
           }
-        };
+          case "stderr": {
+            stderrBuf += str;
+            break;
+          }
+          default: {
+            const exhaustivenessCheck: never = channel;
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            throw new Error(`Not exhaustive: ${exhaustivenessCheck}`);
+          }
+        }
       };
 
       child.stdout.on("data", getStreamHandler("stdout"));
       child.stderr.on("data", getStreamHandler("stderr"));
 
-      child.on("close", async (exitCode) => {
+      child.on("close", (exitCode) => {
         logger.info({ exitCode }, `Finished command ${commandDisplayed}`);
         if (exitCode) {
           const stderr = redactSecrets(stderrBuf.trim(), secretsToRedact);
