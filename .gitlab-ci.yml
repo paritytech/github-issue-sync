@@ -40,7 +40,7 @@ default:
     - if: $CI_COMMIT_REF_NAME == "master"
 
 .common-refs:                      &common-refs
-  extends:
+  rules:
     - !reference [.test-refs, rules]
     - !reference [.publish-refs, rules]
 
