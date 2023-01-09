@@ -72,8 +72,7 @@ build-docker-only:
 
 build-push-docker-image:
   stage:                           build
-  # <<:                              *publish-refs
-  <<: *test-refs
+  <<:                              *publish-refs
   image:                           $BUILDAH_IMAGE
   script:
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
@@ -148,8 +147,7 @@ build-push-docker-image:
 
 deploy-staging:
   stage:                           staging
-  # <<:                              *publish-refs
-  <<: *test-refs
+  <<:                              *publish-refs
   <<:                              *deploy-k8s
   variables:
     ENVIRONMENT:                   parity-stg
