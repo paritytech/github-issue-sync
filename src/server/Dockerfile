@@ -5,7 +5,7 @@ FROM node:16.14-alpine
 # project's root, not this directory
 
 # jq is used for Filtered Rules' expressions at runtime
-RUN apk add jq
+RUN apk add jq git
 
 RUN mkdir /app && chown node:node /app
 COPY --chown=node:node . /app

@@ -34,6 +34,10 @@ default:
     - if: $CI_COMMIT_REF_NAME == "master"
     - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                 # PRs
 
+.test-refs:                        &test-refs
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                 # PRs
+
 .staging-refs:                     &staging-refs
   rules:
     - if: $CI_COMMIT_REF_NAME == "master"
@@ -70,7 +74,7 @@ lint:
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
         ( echo "no docker credentials provided"; exit 1 )
     - echo "Log INFO values for the image that will be built"
-    - echo 
+    - echo
         buildah bud
         --format=docker
         --build-arg VCS_REF="$CI_COMMIT_SHA"
@@ -93,6 +97,20 @@ lint:
     - buildah push --format=v2s2 "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
   after_script:
     - buildah logout --all
+
+build-docker-only:
+  stage:                           build
+  image:                           $BUILDAH_IMAGE
+  <<:                              *test-refs
+  script:
+    - buildah bud
+        --format=docker
+        --build-arg VCS_REF="$CI_COMMIT_SHA"
+        --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        --build-arg VERSION="$DEPLOYMENT_TAG"
+        --build-arg PORT="$APP_PORT"
+        --tag "$DEPLOYMENT_IMAGE_REGISTRY:$DEPLOYMENT_TAG"
+        --file src/server/Dockerfile .
 
 build-staging:
   <<:                              *staging-refs
