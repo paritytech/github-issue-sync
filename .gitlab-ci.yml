@@ -52,6 +52,7 @@ lint:
   stage:                           lint
   script:
     # TODO: Use pre-commit run --all
+    - yarn --immutable
     - yarn lint
 
 # template task for building and pushing an image
