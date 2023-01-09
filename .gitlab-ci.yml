@@ -65,7 +65,7 @@ build-docker-only:
         --format=docker
         --build-arg VCS_REF="$CI_COMMIT_SHA"
         --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        --build-arg VERSION="$DEPLOYMENT_TAG"
+        --build-arg VERSION="$DOCKER_TAG"
         --build-arg PORT="$APP_PORT"
         --tag "$IMAGE_NAME:$DOCKER_TAG"
         --file src/server/Dockerfile .
@@ -83,7 +83,7 @@ build-push-docker-image:
         --format=docker
         --build-arg VCS_REF="$CI_COMMIT_SHA"
         --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        --build-arg VERSION="$DEPLOYMENT_TAG"
+        --build-arg VERSION="$DOCKER_TAG"
         --build-arg PORT="$APP_PORT"
         --tag "$IMAGE_NAME:$DOCKER_TAG"
         --file src/server/Dockerfile .
@@ -91,7 +91,7 @@ build-push-docker-image:
         --format=docker
         --build-arg VCS_REF="$CI_COMMIT_SHA"
         --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        --build-arg VERSION="$DEPLOYMENT_TAG"
+        --build-arg VERSION="$DOCKER_TAG"
         --build-arg PORT="$APP_PORT"
         --tag "$IMAGE_NAME:$DOCKER_TAG"
         --file src/server/Dockerfile .
