@@ -149,7 +149,7 @@ build-push-docker-image:
 
 deploy-staging:
   stage:                           staging
-  <<:                              *staging-refs
+  <<:                              *publish-refs
   <<:                              *deploy-k8s
   variables:
     ENVIRONMENT:                   parity-stg
