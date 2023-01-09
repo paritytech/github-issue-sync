@@ -42,6 +42,12 @@ default:
   rules:
     - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/                 # PRs
 
+.publish-refs:                     &publish-refs
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+    - if: $CI_COMMIT_REF_NAME =~ /^stg-v[0-9]+\.[0-9]+.*$/  # e.g. stg-v0.1
+    - if: $CI_COMMIT_REF_NAME =~ /^v[0-9]+\.[0-9]+.*$/      # e.g. v0.1
+
 .staging-refs:                     &staging-refs
   rules:
     - if: $CI_COMMIT_REF_NAME == "master"
@@ -76,7 +82,7 @@ build-docker-only:
 
 build-push-docker-image:
   stage:                           build
-  <<:                              *common-refs
+  <<:                              *publish-refs
   image:                           $BUILDAH_IMAGE
   script:
     - test "$Docker_Hub_User_Parity" -a "$Docker_Hub_Pass_Parity" ||
