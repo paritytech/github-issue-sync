@@ -1,18 +1,39 @@
-import { error, getInput, info } from "@actions/core";
-import { context } from "@actions/github";
+import { getInput, info, notice, setFailed, warning } from "@actions/core";
+import { context, getOctokit } from "@actions/github";
+import { IssueApi } from "./github/issueKit";
+import { ProjectKit } from "./github/projectKit";
+import { Synchronizer } from "./synchronizer";
 
 type ActionInputs = { repoToken: string, orgToken: string, projectNumber: number };
+
+type EventNames = "workflow_dispatch" | "issues";
 
 const main = async (inputs: ActionInputs) => {
     info("Starting event of type " + context.eventName);
 
-    const {
-        payload: { issue },
-        repo,
-    } = context;
+    const { repo, eventName } = context;
 
-    info(`Received issue ${JSON.stringify(issue)}`);
-    info(`Received payload ${JSON.stringify(context.payload)}`);
+    const kit = getOctokit(inputs.repoToken);
+    const issueKit = new IssueApi(kit, repo);
+    const projectGraphQl = getOctokit(inputs.orgToken).graphql.defaults({ headers: { authorization: `token ${inputs.orgToken}` } });
+    const projectKit = new ProjectKit(projectGraphQl, repo, inputs.projectNumber);
+
+    const synchronizer = new Synchronizer(issueKit, projectKit);
+
+    if ((eventName as EventNames) === "workflow_dispatch") {
+        // ! remember to put this in the documentation and log it with some info tag
+        const excludeClosed = (context.payload.inputs.excludeClosed as "true" | "false") === "true";
+        notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
+        await synchronizer.updateAllIssues(excludeClosed);
+    } else if ((eventName as EventNames) === "issues") {
+        info(`Received issue ${JSON.stringify(context.payload.issue)}`);
+    } else {
+        const failMessage = `Event '${eventName}' is not expected. Failing.`;
+        warning(failMessage)
+        setFailed(failMessage);
+        throw new Error(failMessage);
+    }
+
 }
 
 const getInputs = (): ActionInputs => {
@@ -29,4 +50,4 @@ const inputs = getInputs();
 
 main(inputs)
     .then(() => info("Finished"))
-    .catch(error);
+    .catch(setFailed);
