@@ -8,15 +8,12 @@ inputs:
   project:
     required: true
     type: number
-  token:
+  GITHUB_TOKEN:
     required: true
     type: string
-  target-project-field:
-    required: true
-    type: string
-  target-project-field-value:
+  PROJECT_TOKEN:
     required: true
     type: string
 runs:
-  using: node16
-  main: dist/action/index.js
+  using: 'docker'
+  image: 'Dockerfile'
