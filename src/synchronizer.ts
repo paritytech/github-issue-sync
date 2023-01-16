@@ -1,4 +1,4 @@
-import { IIssues, ILogger, IProjectApi, Issue } from "./github/types"
+import { IIssues, ILogger, IProjectApi, Issue } from "./github/types";
 
 
 type IssueEvent = "opened" | "deleted" | "closed" | "reopened" | "labeled" | "unlabeled" | "transfered";
@@ -20,23 +20,28 @@ export class Synchronizer {
         private readonly logger: ILogger) {
     }
 
-    async synchronizeIssue(context: GitHubContext) {
-        if (context.eventName === "workflow_dispatch") {
-            const excludeClosed = context.payload.inputs?.excludeClosed === "true";
-            this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
-            await this.updateAllIssues(excludeClosed);
-        } else if (context.eventName === "issues") {
-            const { issue } = context.payload;
-            if (!issue) {
-                throw new Error("Issue payload object was null");
-            }
-            this.logger.debug(`Received issue ${JSON.stringify(context.payload.issue)}`);
-            this.logger.info(`Assigning issue #${issue?.number} to project`);
-            await this.updateOneIssue(issue);
-        } else {
-            const failMessage = `Event '${context.eventName}' is not expected. Failing.`;
-            this.logger.warning(failMessage)
-            throw new Error(failMessage);
+    async synchronizeIssue(context: GitHubContext): Promise<void> {
+        switch (context.eventName) {
+            case "workflow_dispatch":
+                const excludeClosed = context.payload.inputs?.excludeClosed === "true";
+                console.log(excludeClosed);
+                this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
+                console.log("HERE!");
+                const ble = this.updateAllIssues(excludeClosed);
+                console.log("HERE");
+                return ble;
+            case "issues":
+                const { issue } = context.payload;
+                if (!issue) {
+                    throw new Error("Issue payload object was null");
+                }
+                this.logger.debug(`Received issue ${JSON.stringify(issue)}`);
+                this.logger.info(`Assigning issue #${issue.number} to project`);
+                return this.updateOneIssue(issue);
+            default:
+                const failMessage = `Event '${context.eventName}' is not expected. Failing.`;
+                this.logger.warning(failMessage)
+                throw new Error(failMessage);
         }
     }
 
