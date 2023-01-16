@@ -1,6 +1,6 @@
 export type Repository = { owner: string, repo: string };
 
-export type IssueNode = { id: string; }
+export type Issue = { number: number; node_id:string };
 
 export interface IProjectApi {
     /**
@@ -8,7 +8,7 @@ export interface IProjectApi {
      * @param issueNodeId The issue node_id (which differs from the issue id)
      * @param projectId The project id (found in github.com/repo/projects/<ID>)
      */
-    assignIssue(issue: IssueNode): Promise<boolean>;
+    assignIssue(issue: Issue): Promise<boolean>;
     // getProjectIdFromIssue(issueId: number): Promise<number>;
     // changeIssueStateInProject(issueId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<boolean>;
 }
@@ -24,5 +24,5 @@ export interface IIssues {
      * Returns the node_id for all the issues available in the repository
      * @param includeClosed exclude issues which are closed from the data agregation.
      */
-    getAllIssuesId(excludeClosed: boolean): Promise<IssueNode[]>;
+    getAllIssuesId(excludeClosed: boolean): Promise<Issue[]>;
 }

@@ -1,4 +1,4 @@
-import { IIssues, IProjectApi } from "./github/types"
+import { IIssues, IProjectApi, Issue } from "./github/types"
 
 
 export type IssueEvent = "opened" | "deleted" | "closed" | "reopened" | "labeled" | "unlabeled" | "transfered"
@@ -14,4 +14,7 @@ export class Synchronizer {
         await Promise.all(updatePromises);
     }
 
+    async updateOneIssue(issue: Issue) {
+        this.projectKit.assignIssue(issue);
+    }
 }

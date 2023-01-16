@@ -1,6 +1,6 @@
 import { GitHub } from "@actions/github/lib/utils";
 import { Octokit } from "@octokit/rest";
-import { IIssues, IssueNode, Repository } from "./types";
+import { IIssues, Issue, Repository } from "./types";
 
 
 
@@ -15,11 +15,8 @@ export class IssueApi implements IIssues {
         return issueData.data.state === "open" ? "open" : "closed";
     }
 
-    async getAllIssuesId(excludeClosed: boolean): Promise<IssueNode[]> {
-        const allIssues = await this.octokit.rest.issues.listForRepo(this.repoData);
-        if (excludeClosed) {
-            return allIssues.data.filter(i => i.state === "open").map(i => ({ id: i.node_id }));
-        }
-        return allIssues.data.map(issue => ({ id: issue.node_id }));
+    async getAllIssuesId(excludeClosed: boolean): Promise<Issue[]> {
+        const allIssues = await this.octokit.rest.issues.listForRepo({ ...this.repoData, state: excludeClosed ? "open" : "all" });
+        return allIssues.data;
     }
 }

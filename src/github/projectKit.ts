@@ -1,5 +1,6 @@
+import { debug, info } from "@actions/core";
 import { graphql } from "@octokit/graphql";
-import { IProjectApi, IssueNode, Repository } from "./types";
+import { IProjectApi, Issue, Repository } from "./types";
 
 interface ProjectData {
   organization: {
@@ -29,9 +30,6 @@ interface CreatedProjectItemForIssue {
 export class ProjectKit implements IProjectApi {
 
   private projectNodeId: string | null = null;
-  public get projectNextId(): string | null {
-    return this.projectNodeId;
-  }
 
   /** Requires an instance with a PAT with the 'write:org' permission enabled */
   constructor(private readonly gql: typeof graphql, private readonly repoData: Repository, private readonly projectNumber: number) {
@@ -67,10 +65,11 @@ export class ProjectKit implements IProjectApi {
    * @returns node_id of the project. This value never changes so caching it per instance is effective
    */
   async fetchProjectId(): Promise<string> {
-    if (this.projectNextId) {
-      return this.projectNextId;
+    if (this.projectNodeId) {
+      return this.projectNodeId;
     }
 
+    // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
     const projectData = await this.gql<ProjectData>(
       `
       query($organization: String!, $number: Int!) {
@@ -90,6 +89,8 @@ export class ProjectKit implements IProjectApi {
     `,
       { organization: this.repoData.owner, number: this.projectNumber },
     );
+
+    debug("Project data is: " + JSON.stringify(projectData));
 
     this.projectNodeId = projectData.organization.projectNext.id;
 
@@ -127,10 +128,7 @@ export class ProjectKit implements IProjectApi {
     );
   }
 
-  // step one
-  async assignIssue(issueNodeId: IssueNode): Promise<boolean> {
-    const project = await this.fetchProjectId();
-
+  async assignIssueToProject(issue: Issue, projectId: string) {
     const migration = await this.gql<CreatedProjectItemForIssue>(
       `
           mutation($project: ID!, $issue: ID!) {
@@ -141,15 +139,19 @@ export class ProjectKit implements IProjectApi {
             }
           }
         `,
-      { project, issue: issueNodeId.id },
+      { project: projectId, issue: issue.node_id },
     );
 
     // TODO: Check what is this ID
     return !!migration.addProjectNextItem.projectNextItem.id;
   }
 
-  async assignIssueToProject(issueNodeId: string) {
-    const projectNodeForIssue = await this.assignIssue({id: issueNodeId});
+  async assignIssue(issue: Issue): Promise<boolean> {
+    const projectId = await this.fetchProjectId();
+
+    info(`Syncing issue #${issue.number} for ${this.projectNumber}`);
+
+    return this.assignIssueToProject(issue, projectId)
 
     // TODO: Assign targetField
   }

@@ -1,7 +1,8 @@
-import { getInput, info, notice, setFailed, warning } from "@actions/core";
+import { debug, getInput, info, notice, setFailed, warning } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { IssueApi } from "./github/issueKit";
 import { ProjectKit } from "./github/projectKit";
+import { Issue } from "./github/types";
 import { Synchronizer } from "./synchronizer";
 
 type ActionInputs = { repoToken: string, orgToken: string, projectNumber: number };
@@ -26,7 +27,13 @@ const main = async (inputs: ActionInputs) => {
         notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
         await synchronizer.updateAllIssues(excludeClosed);
     } else if ((eventName as EventNames) === "issues") {
-        info(`Received issue ${JSON.stringify(context.payload.issue)}`);
+        const { issue } = context.payload;
+        if (!issue) {
+            throw new Error("Issue payload object was null");
+        }
+        debug(`Received issue ${JSON.stringify(context.payload.issue)}`);
+        info(`Assigning issue #${issue?.number} to project`);
+        await synchronizer.updateOneIssue(issue as Issue);
     } else {
         const failMessage = `Event '${eventName}' is not expected. Failing.`;
         warning(failMessage)
