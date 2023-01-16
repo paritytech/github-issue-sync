@@ -20,7 +20,7 @@ export class Synchronizer {
         private readonly logger: ILogger) {
     }
 
-    async synchronizeIssue(context: GitHubContext): Promise<void> {
+    async synchronizeIssue(context: GitHubContext): Promise<boolean> {
         switch (context.eventName) {
             case "workflow_dispatch":
                 const excludeClosed = context.payload.inputs?.excludeClosed === "true";
@@ -41,13 +41,14 @@ export class Synchronizer {
         }
     }
 
-    async updateAllIssues(excludeClosed: boolean = false) {
+    async updateAllIssues(excludeClosed: boolean = false): Promise<boolean> {
         const issuesIds = await this.issueKit.getAllIssuesId(excludeClosed);
         const updatePromises = issuesIds.map(nodeId => this.projectKit.assignIssue(nodeId));
-        await Promise.all(updatePromises);
+        const syncs = await Promise.all(updatePromises);
+        return syncs.every(s => s);
     }
 
-    async updateOneIssue(issue: Issue) {
-        this.projectKit.assignIssue(issue);
+    async updateOneIssue(issue: Issue): Promise<boolean> {
+        return this.projectKit.assignIssue(issue);
     }
 }
