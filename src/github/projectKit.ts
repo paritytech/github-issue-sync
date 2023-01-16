@@ -1,6 +1,5 @@
-import { debug, info } from "@actions/core";
 import { graphql } from "@octokit/graphql";
-import { IProjectApi, Issue, Repository } from "./types";
+import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
 interface ProjectData {
   organization: {
@@ -32,7 +31,11 @@ export class ProjectKit implements IProjectApi {
   private projectNodeId: string | null = null;
 
   /** Requires an instance with a PAT with the 'write:org' permission enabled */
-  constructor(private readonly gql: typeof graphql, private readonly repoData: Repository, private readonly projectNumber: number) {
+  constructor(
+    private readonly gql: typeof graphql,
+    private readonly repoData: Repository,
+    private readonly projectNumber: number,
+    private readonly logger: ILogger) {
   }
 
   /*   changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
@@ -89,8 +92,6 @@ export class ProjectKit implements IProjectApi {
     `,
       { organization: this.repoData.owner, number: this.projectNumber },
     );
-
-    debug("Project data is: " + JSON.stringify(projectData));
 
     this.projectNodeId = projectData.organization.projectNext.id;
 
@@ -149,7 +150,7 @@ export class ProjectKit implements IProjectApi {
   async assignIssue(issue: Issue): Promise<boolean> {
     const projectId = await this.fetchProjectId();
 
-    info(`Syncing issue #${issue.number} for ${this.projectNumber}`);
+    this.logger.info(`Syncing issue #${issue.number} for ${this.projectNumber}`);
 
     return this.assignIssueToProject(issue, projectId)
 

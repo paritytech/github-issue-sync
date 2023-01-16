@@ -1,6 +1,6 @@
 export type Repository = { owner: string, repo: string };
 
-export type Issue = { number: number; node_id:string };
+export type Issue = { number: number; node_id: string };
 
 export interface IProjectApi {
     /**
@@ -25,4 +25,14 @@ export interface IIssues {
      * @param includeClosed exclude issues which are closed from the data agregation.
      */
     getAllIssuesId(excludeClosed: boolean): Promise<Issue[]>;
+}
+
+export interface ILogger {
+    info(message: string): void;
+    warning(message: string): void;
+    error(message: string | Error): void;
+    /** Only posts messages if the action is ran in debug mode */
+    debug(message: string): void;
+    /** Publishes a message that can be seen in the action preview */
+    notice(message: string): void;
 }
