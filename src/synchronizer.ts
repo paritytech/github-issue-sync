@@ -24,12 +24,8 @@ export class Synchronizer {
         switch (context.eventName) {
             case "workflow_dispatch":
                 const excludeClosed = context.payload.inputs?.excludeClosed === "true";
-                console.log(excludeClosed);
                 this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
-                console.log("HERE!");
-                const ble = this.updateAllIssues(excludeClosed);
-                console.log("HERE");
-                return ble;
+                return this.updateAllIssues(excludeClosed);
             case "issues":
                 const { issue } = context.payload;
                 if (!issue) {
