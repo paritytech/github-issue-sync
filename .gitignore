@@ -1,9 +1,8 @@
 # deps
-node_modules
+/node_modules
 
 # TypeScript compilation directory
-build/*
-!build/package.json
+/dist
 
 # ncc output directory used for the action release
 # normally the package would be ignored, but in this case it shouldn't because
@@ -14,3 +13,4 @@ build/*
 yarn-error.log
 
 .idea
+.DS_Store

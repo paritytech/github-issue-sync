@@ -1,16 +1,22 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "target": "ES2021", // Node.js LTS 16
-    "lib": ["ES2021"], // Node.js LTS 16
+    "rootDir": "./src",
+    "target": "ESNext",
+    "lib": [
+      "ESNext"
+    ],
     "moduleResolution": "node",
-    "module": "esnext",
+    "module": "NodeNext",
     "sourceMap": false,
     "declaration": false,
     "strict": true,
     "esModuleInterop": true,
-    "types": ["node"],
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "outDir": "dist",
   },
-  "include": ["src", "templates"]
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ],
 }
