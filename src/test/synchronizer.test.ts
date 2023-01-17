@@ -1,6 +1,8 @@
-import { mock, mockReset } from 'jest-mock-extended';
-import { IIssues, ILogger, IProjectApi, Issue } from "../github/types";
-import { Synchronizer } from "../synchronizer";
+/* eslint-disable @typescript-eslint/unbound-method */
+import { mock, mockReset } from "jest-mock-extended";
+
+import { IIssues, ILogger, IProjectApi, Issue } from "src/github/types";
+import { Synchronizer } from "src/synchronizer";
 
 describe("Synchronizer tests", () => {
   const issueKit = mock<IIssues>();
@@ -15,66 +17,58 @@ describe("Synchronizer tests", () => {
     synchronizer = new Synchronizer(issueKit, projectKit, logger);
   });
 
-  test('should fail on invalid event name', async () => {
+  test("should fail on invalid event name", async () => {
     const randomEventName = new Date().toDateString();
-    const expectedError = `Event '${randomEventName}' is not expected. Failing.`
-    await expect(synchronizer
-      .synchronizeIssue({ eventName: randomEventName, payload: {} }))
-      .rejects
-      .toThrow(expectedError);
+    const expectedError = `Event '${randomEventName}' is not expected. Failing.`;
+    await expect(synchronizer.synchronizeIssue({ eventName: randomEventName, payload: {} })).rejects.toThrow(
+      expectedError,
+    );
   });
 
-  test('should fail on issue event without payload', async () => {
-    await expect(synchronizer.synchronizeIssue({ eventName: "issues", payload: {} }))
-      .rejects
-      .toThrow("Issue payload object was null");
+  test("should fail on issue event without payload", async () => {
+    await expect(synchronizer.synchronizeIssue({ eventName: "issues", payload: {} })).rejects.toThrow(
+      "Issue payload object was null",
+    );
   });
 
-  test('should log when all issues will be synced', async () => {
+  test("should log when all issues will be synced", async () => {
     issueKit.getAllIssuesId.mockReturnValue(Promise.resolve([]));
-    await synchronizer.synchronizeIssue({
-      eventName: "workflow_dispatch", payload: {}
-    });
+    await synchronizer.synchronizeIssue({ eventName: "workflow_dispatch", payload: {} });
 
     expect(logger.notice).toBeCalledWith("Closed issues will be synced.");
   });
 
-  test('should log when only open issues will be synced', async () => {
+  test("should log when only open issues will be synced", async () => {
     issueKit.getAllIssuesId.mockReturnValue(Promise.resolve([]));
     await synchronizer.synchronizeIssue({
-      eventName: "workflow_dispatch", payload: {
-        inputs: { excludeClosed: "true" }
-      }
+      eventName: "workflow_dispatch",
+      payload: { inputs: { excludeClosed: "true" } },
     });
 
     expect(logger.notice).toBeCalledWith("Closed issues will NOT be synced.");
   });
 
-  test('should invoke project.assignIssue', async () => {
+  test("should invoke project.assignIssue", async () => {
     const issueNumber = Math.floor(Math.random() * 100);
     await synchronizer.synchronizeIssue({
-      eventName: "issues", payload: {
-        issue: {
-          node_id: "1234321", number: issueNumber
-        }
-      }
+      eventName: "issues",
+      payload: { issue: { node_id: "1234321", number: issueNumber } },
     });
 
     logger.info.calledWith(`Assigning issue #${issueNumber} to project`);
-    projectKit.assignIssue.calledWith({
-      node_id: "1234321", number: issueNumber
-    });
+    projectKit.assignIssue.calledWith({ node_id: "1234321", number: issueNumber });
   });
 
-  test('should call project.assignIssue over an iteration', async () => {
-    const issues: Issue[] = [{ number: 123, node_id: "asd_dsa" }, { number: 987, node_id: "poi_lkj" }];
+  test("should call project.assignIssue over an iteration", async () => {
+    const issues: Issue[] = [
+      { number: 123, node_id: "asd_dsa" },
+      { number: 987, node_id: "poi_lkj" },
+    ];
     issueKit.getAllIssuesId.mockReturnValue(Promise.resolve(issues));
-    await synchronizer.synchronizeIssue({
-      eventName: "workflow_dispatch", payload: {}
-    });
+    await synchronizer.synchronizeIssue({ eventName: "workflow_dispatch", payload: {} });
 
-    issues.forEach(i => {
+    issues.forEach((i) => {
       projectKit.assignIssue.calledWith(i);
     });
-  })
-})
+  });
+});
