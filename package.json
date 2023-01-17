@@ -16,9 +16,9 @@
     "typecheck": "tsc --noEmit",
     "fix:eslint": "eslint --fix",
     "fix:prettier": "prettier --write",
-    "fix": "yarn fix:eslint '{*,**/*}.{cjs,ts}' && yarn fix:prettier '{*,**/*}.json'",
+    "fix": "yarn fix:eslint '{*,**/*}.ts' && yarn fix:prettier '{*,**/*}.json'",
     "prettier": "prettier --check --loglevel silent '{*,**/*}.{json,html}'",
-    "eslint": "eslint --quiet '{*,**/*}.{cjs,ts}'",
+    "eslint": "eslint --quiet '{*,**/*}.ts'",
     "lint": "yarn eslint && yarn prettier"
   },
   "dependencies": {
