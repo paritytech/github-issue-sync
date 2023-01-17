@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { mock, mockReset } from "jest-mock-extended";
 
-import { IIssues, ILogger, IProjectApi, Issue } from "../github/types";
-import { Synchronizer } from "../synchronizer";
+import { IIssues, ILogger, IProjectApi, Issue } from "src/github/types";
+import { Synchronizer } from "src/synchronizer";
 
 describe("Synchronizer tests", () => {
   const issueKit = mock<IIssues>();
