@@ -1,4 +1,5 @@
 import { graphql } from "@octokit/graphql";
+
 import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
 interface ProjectData {
@@ -14,12 +15,11 @@ interface ProjectData {
       };
     };
   };
-};
+}
 
 interface CreatedProjectItemForIssue {
   addProjectNextItem: { projectNextItem: { id: string } };
-};
-
+}
 
 /**
  * Instance that manages the GitHub's project api
@@ -27,7 +27,6 @@ interface CreatedProjectItemForIssue {
  * Used this blog post as a reference for the queries: https://www.cloudwithchris.com/blog/automate-adding-gh-issues-projects-beta/
  */
 export class ProjectKit implements IProjectApi {
-
   private projectNodeId: string | null = null;
 
   /** Requires an instance with a PAT with the 'write:org' permission enabled */
@@ -35,8 +34,8 @@ export class ProjectKit implements IProjectApi {
     private readonly gql: typeof graphql,
     private readonly repoData: Repository,
     private readonly projectNumber: number,
-    private readonly logger: ILogger) {
-  }
+    private readonly logger: ILogger,
+  ) {}
 
   /*   changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
       return this.gql(
@@ -99,13 +98,13 @@ export class ProjectKit implements IProjectApi {
   }
 
   // step three
-  updateProjectNextItemField(
+  async updateProjectNextItemField(
     project: string,
     item: string,
     targetField: string,
     targetFieldValue: string,
-  ) {
-    this.gql(
+  ): Promise<void> {
+    await this.gql(
       `
       mutation (
         $project: ID!
@@ -129,7 +128,7 @@ export class ProjectKit implements IProjectApi {
     );
   }
 
-  async assignIssueToProject(issue: Issue, projectId: string) {
+  async assignIssueToProject(issue: Issue, projectId: string): Promise<string> {
     const migration = await this.gql<CreatedProjectItemForIssue>(
       `
           mutation($project: ID!, $issue: ID!) {
@@ -152,7 +151,7 @@ export class ProjectKit implements IProjectApi {
 
     this.logger.info(`Syncing issue #${issue.number} for ${this.projectNumber}`);
 
-    return this.assignIssueToProject(issue, projectId)
+    return await this.assignIssueToProject(issue, projectId);
 
     // TODO: Assign targetField
   }
