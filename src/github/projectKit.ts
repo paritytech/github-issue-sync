@@ -128,7 +128,7 @@ export class ProjectKit implements IProjectApi {
     );
   }
 
-  async assignIssueToProject(issue: Issue, projectId: string): Promise<string> {
+  async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
     const migration = await this.gql<CreatedProjectItemForIssue>(
       `
           mutation($project: ID!, $issue: ID!) {
