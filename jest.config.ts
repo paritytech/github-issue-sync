@@ -5,7 +5,6 @@ const config: Config = {
     testEnvironment: "node",
     testMatch: ["<rootDir>/src/test/**/*.test.ts"],
     moduleNameMapper: { "^src/(.*)$": `${process.cwd()}/src/$1` },
-
 }
 
 export default config;
