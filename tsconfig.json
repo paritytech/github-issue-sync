@@ -13,10 +13,17 @@
     "esModuleInterop": true,
     "useUnknownInCatchVariables": false,
     "outDir": "dist",
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ]
+    }
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
-    "**/*.spec.ts"
-  ],
+    "src/**/*.test.ts"
+  ]
 }
