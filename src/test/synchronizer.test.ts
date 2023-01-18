@@ -32,14 +32,14 @@ describe("Synchronizer tests", () => {
   });
 
   test("should log when all issues will be synced", async () => {
-    issueKit.getAllIssuesId.mockReturnValue(Promise.resolve([]));
+    issueKit.getAllIssues.mockReturnValue(Promise.resolve([]));
     await synchronizer.synchronizeIssue({ eventName: "workflow_dispatch", payload: {} });
 
     expect(logger.notice).toBeCalledWith("Closed issues will be synced.");
   });
 
   test("should log when only open issues will be synced", async () => {
-    issueKit.getAllIssuesId.mockReturnValue(Promise.resolve([]));
+    issueKit.getAllIssues.mockReturnValue(Promise.resolve([]));
     await synchronizer.synchronizeIssue({
       eventName: "workflow_dispatch",
       payload: { inputs: { excludeClosed: "true" } },
@@ -59,16 +59,15 @@ describe("Synchronizer tests", () => {
     projectKit.assignIssue.calledWith({ node_id: "1234321", number: issueNumber });
   });
 
-  test("should call project.assignIssue over an iteration", async () => {
+  test("should call project.assignIssues with an iteration", async () => {
     const issues: Issue[] = [
       { number: 123, node_id: "asd_dsa" },
       { number: 987, node_id: "poi_lkj" },
     ];
-    issueKit.getAllIssuesId.mockReturnValue(Promise.resolve(issues));
+    issueKit.getAllIssues.mockReturnValue(Promise.resolve(issues));
+    projectKit.assignIssues.mockReturnValue(Promise.resolve([true, true]));
     await synchronizer.synchronizeIssue({ eventName: "workflow_dispatch", payload: {} });
 
-    issues.forEach((i) => {
-      projectKit.assignIssue.calledWith(i);
-    });
+    projectKit.assignIssues.calledWith(issues);
   });
 });

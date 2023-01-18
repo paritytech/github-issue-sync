@@ -39,7 +39,7 @@ export class ProjectKit implements IProjectApi {
     private readonly repoData: Repository,
     private readonly projectNumber: number,
     private readonly logger: ILogger,
-  ) { }
+  ) {}
 
   /*   changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
       return this.gql(
