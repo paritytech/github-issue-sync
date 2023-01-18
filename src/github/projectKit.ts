@@ -85,7 +85,7 @@ export class ProjectKit implements IProjectApi {
     }
 
     try {
-      // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
+      // Source: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects#using-variables
       const projectData = await this.gql<{ organization: { projectV2: NodeData } }>(PROJECT_V2_QUERY, {
         organization: this.repoData.owner,
         number: this.projectNumber,
