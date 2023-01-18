@@ -45,6 +45,7 @@ export class Synchronizer {
       this.logger.notice("No issues found");
       return false;
     }
+    this.logger.info(`Updating ${issues.length} issues`);
     const issueAssigment = await this.projectKit.assignIssues(issues);
     return issueAssigment.every((s) => s);
   }
