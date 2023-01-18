@@ -2,19 +2,22 @@ import { graphql } from "@octokit/graphql";
 
 import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
+type NodeData = { id: string; title: string };
+
 interface ProjectData {
   organization: {
-    projectV2: {
-      id: string;
-      title: string;
-      // fields: {
-      //   nodes: {
-      //     id: string;
-      //     name: string;
-      //     settings?: string | null;
-      //   }[];
-      // };
-    };
+    projectV2: NodeData;
+    // {
+    //   id: string;
+    //   title: string;
+    //   // fields: {
+    //   //   nodes: {
+    //   //     id: string;
+    //   //     name: string;
+    //   //     settings?: string | null;
+    //   //   }[];
+    //   // };
+    // };
   };
 }
 
@@ -28,7 +31,7 @@ interface CreatedProjectItemForIssue {
  * Used this blog post as a reference for the queries: https://www.cloudwithchris.com/blog/automate-adding-gh-issues-projects-beta/
  */
 export class ProjectKit implements IProjectApi {
-  private projectNodeId: string | null = null;
+  private projectNode: NodeData | null = null;
 
   /** Requires an instance with a PAT with the 'write:org' permission enabled */
   constructor(
@@ -36,7 +39,7 @@ export class ProjectKit implements IProjectApi {
     private readonly repoData: Repository,
     private readonly projectNumber: number,
     private readonly logger: ILogger,
-  ) {}
+  ) { }
 
   /*   changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
       return this.gql(
@@ -67,24 +70,10 @@ export class ProjectKit implements IProjectApi {
    * Fetches the node id from the project id and caches it.
    * @returns node_id of the project. This value never changes so caching it per instance is effective
    */
-  async fetchProjectId(): Promise<string> {
-    if (this.projectNodeId) {
-      return this.projectNodeId;
+  async fetchProjectData(): Promise<NodeData> {
+    if (this.projectNode) {
+      return this.projectNode;
     }
-
-    this.logger.info(
-      "About to contact: " +
-        `
-    query($organization: String!, $number: Int!) {
-      organization(login: $organization){
-        projectV2(number: $number) {
-          id
-          title
-        }
-      }
-    }
-  `,
-    );
 
     try {
       // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
@@ -104,9 +93,9 @@ export class ProjectKit implements IProjectApi {
 
       this.logger.info("data received " + JSON.stringify(projectData));
 
-      this.projectNodeId = projectData.organization.projectV2.id;
+      this.projectNode = projectData.organization.projectV2;
 
-      return projectData.organization.projectV2.id;
+      return projectData.organization.projectV2;
     } catch (e) {
       this.logger.error("Failed while executing the FetchProjectId query");
       throw e;
@@ -167,13 +156,25 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
+  async addIssueToProject(issue: Issue, project: NodeData): Promise<boolean> {
+    this.logger.info(`Syncing issue #${issue.number} for ${project.title}`);
+
+    return await this.assignIssueToProject(issue, project.id);
+  }
+
   async assignIssue(issue: Issue): Promise<boolean> {
-    const projectId = await this.fetchProjectId();
+    const project = await this.fetchProjectData();
 
-    this.logger.info(`Syncing issue #${issue.number} for ${this.projectNumber}`);
-
-    return await this.assignIssueToProject(issue, projectId);
+    return await this.addIssueToProject(issue, project);
 
     // TODO: Assign targetField
+  }
+
+  async assignIssues(issues: Issue[]): Promise<boolean[]> {
+    const project = await this.fetchProjectData();
+
+    const issueAssigment = issues.map((issue) => this.addIssueToProject(issue, project));
+
+    return await Promise.all(issueAssigment);
   }
 }

@@ -17,7 +17,7 @@ export class Synchronizer {
     private readonly issueKit: IIssues,
     private readonly projectKit: IProjectApi,
     private readonly logger: ILogger,
-  ) {}
+  ) { }
 
   async synchronizeIssue(context: GitHubContext): Promise<boolean> {
     if (context.eventName === "workflow_dispatch") {
@@ -40,10 +40,9 @@ export class Synchronizer {
   }
 
   async updateAllIssues(excludeClosed: boolean = false): Promise<boolean> {
-    const issuesIds = await this.issueKit.getAllIssuesId(excludeClosed);
-    const updatePromises = issuesIds.map((nodeId) => this.projectKit.assignIssue(nodeId));
-    const syncs = await Promise.all(updatePromises);
-    return syncs.every((s) => s);
+    const issues = await this.issueKit.getAllIssues(excludeClosed);
+    const issueAssigment = await this.projectKit.assignIssues(issues);
+    return issueAssigment.every((s) => s);
   }
 
   async updateOneIssue(issue: Issue): Promise<boolean> {
