@@ -21,10 +21,6 @@ interface ProjectData {
   };
 }
 
-interface CreatedProjectItemForIssue {
-  addProjectNextItem: { projectNextItem: { id: string } };
-}
-
 /**
  * Instance that manages the GitHub's project api
  * ? Octokit.js doesn't support Project v2 API yet so we need to use graphQL
@@ -91,8 +87,6 @@ export class ProjectKit implements IProjectApi {
         { organization: this.repoData.owner, number: this.projectNumber },
       );
 
-      this.logger.info("data received " + JSON.stringify(projectData));
-
       this.projectNode = projectData.organization.projectV2;
 
       return projectData.organization.projectV2;
@@ -135,11 +129,11 @@ export class ProjectKit implements IProjectApi {
 
   async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
     try {
-      const migration = await this.gql<CreatedProjectItemForIssue>(
+      const migration = await this.gql<{ addProjectV2ItemById: { item: { id: string } } }>(
         `
           mutation($project: ID!, $issue: ID!) {
-            addProjectNextItem(input: {projectId: $project, contentId: $issue}) {
-              projectNextItem {
+            addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+              item {
                 id
               }
             }
@@ -148,10 +142,9 @@ export class ProjectKit implements IProjectApi {
         { project: projectId, issue: issue.node_id },
       );
 
-      // TODO: Check what is this ID
-      return !!migration.addProjectNextItem.projectNextItem.id;
+      return !!migration.addProjectV2ItemById.item.id;
     } catch (e) {
-      this.logger.error("Failed while executing 'addProjectNextItem' query");
+      this.logger.error("Failed while executing 'addProjectV2ItemById' query");
       throw e;
     }
   }
