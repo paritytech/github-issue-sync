@@ -25,20 +25,24 @@ mutation($project: ID!, $issue: ID!) {
 }
 `;
 
-export const UPDATE_PROJECT_NEXT_ITEM_FIELD_QUERY: string = `
+export const UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY: string = `
 mutation (
   $project: ID!
   $item: ID!
   $targetField: ID!
   $targetFieldValue: String!
 ) {
-  updateProjectNextItemField(input: {
-    projectId: $project
-    itemId: $item
-    fieldId: $targetField
-    value: $targetFieldValue
-  }) {
-    projectNextItem {
+  updateProjectV2ItemFieldValue(
+    input: {
+      projectId: $project
+      itemId: $item
+      fieldId: $targetField
+      value: {
+        singleSelectOptionId: $targetFieldValue
+        }
+      }
+    ) {
+    projectV2Item {
       id
     }
   }
@@ -113,14 +117,13 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
-  // step three
   async updateProjectNextItemField(
     project: string,
     item: string,
     targetField: string,
     targetFieldValue: string,
   ): Promise<void> {
-    await this.gql(UPDATE_PROJECT_NEXT_ITEM_FIELD_QUERY, { project, item, targetField, targetFieldValue });
+    await this.gql(UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY, { project, item, targetField, targetFieldValue });
   }
 
   async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
