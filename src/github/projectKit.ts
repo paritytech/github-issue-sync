@@ -4,15 +4,16 @@ import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
 interface ProjectData {
   organization: {
-    projectNext: {
+    projectV2: {
       id: string;
-      fields: {
-        nodes: {
-          id: string;
-          name: string;
-          settings?: string | null;
-        }[];
-      };
+      title: string;
+      // fields: {
+      //   nodes: {
+      //     id: string;
+      //     name: string;
+      //     settings?: string | null;
+      //   }[];
+      // };
     };
   };
 }
@@ -71,30 +72,45 @@ export class ProjectKit implements IProjectApi {
       return this.projectNodeId;
     }
 
-    // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
-    const projectData = await this.gql<ProjectData>(
-      `
+    this.logger.info(
+      "About to contact: " +
+        `
+    query($organization: String!, $number: Int!) {
+      organization(login: $organization){
+        projectV2(number: $number) {
+          id
+          title
+        }
+      }
+    }
+  `,
+    );
+
+    try {
+      // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
+      const projectData = await this.gql<ProjectData>(
+        `
       query($organization: String!, $number: Int!) {
         organization(login: $organization){
-          projectNext(number: $number) {
+          projectV2(number: $number) {
             id
-            fields(first: 20) {
-              nodes {
-                id
-                name
-                settings
-              }
-            }
+            title
           }
         }
       }
     `,
-      { organization: this.repoData.owner, number: this.projectNumber },
-    );
+        { organization: this.repoData.owner, number: this.projectNumber },
+      );
 
-    this.projectNodeId = projectData.organization.projectNext.id;
+      this.logger.info("data received " + JSON.stringify(projectData));
 
-    return projectData.organization.projectNext.id;
+      this.projectNodeId = projectData.organization.projectV2.id;
+
+      return projectData.organization.projectV2.id;
+    } catch (e) {
+      this.logger.error("Failed while executing the FetchProjectId query");
+      throw e;
+    }
   }
 
   // step three
@@ -129,8 +145,9 @@ export class ProjectKit implements IProjectApi {
   }
 
   async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
-    const migration = await this.gql<CreatedProjectItemForIssue>(
-      `
+    try {
+      const migration = await this.gql<CreatedProjectItemForIssue>(
+        `
           mutation($project: ID!, $issue: ID!) {
             addProjectNextItem(input: {projectId: $project, contentId: $issue}) {
               projectNextItem {
@@ -139,11 +156,15 @@ export class ProjectKit implements IProjectApi {
             }
           }
         `,
-      { project: projectId, issue: issue.node_id },
-    );
+        { project: projectId, issue: issue.node_id },
+      );
 
-    // TODO: Check what is this ID
-    return !!migration.addProjectNextItem.projectNextItem.id;
+      // TODO: Check what is this ID
+      return !!migration.addProjectNextItem.projectNextItem.id;
+    } catch (e) {
+      this.logger.error("Failed while executing 'addProjectNextItem' query");
+      throw e;
+    }
   }
 
   async assignIssue(issue: Issue): Promise<boolean> {
