@@ -4,6 +4,47 @@ import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
 type NodeData = { id: string; title: string };
 
+export const PROJECT_V2_QUERY: string = `
+query($organization: String!, $number: Int!) {
+  organization(login: $organization){
+    projectV2(number: $number) {
+      id
+      title
+    }
+  }
+}
+`;
+
+export const ADD_PROJECT_V2_ITEM_BY_ID_QUERY: string = `
+mutation($project: ID!, $issue: ID!) {
+  addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+    item {
+      id
+    }
+  }
+}
+`;
+
+export const UPDATE_PROJECT_NEXT_ITEM_FIELD_QUERY: string = `
+mutation (
+  $project: ID!
+  $item: ID!
+  $targetField: ID!
+  $targetFieldValue: String!
+) {
+  updateProjectNextItemField(input: {
+    projectId: $project
+    itemId: $item
+    fieldId: $targetField
+    value: $targetFieldValue
+  }) {
+    projectNextItem {
+      id
+    }
+  }
+}
+`;
+
 interface ProjectData {
   organization: {
     projectV2: NodeData;
@@ -37,30 +78,15 @@ export class ProjectKit implements IProjectApi {
     private readonly logger: ILogger,
   ) {}
 
-  /*   changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
-      return this.gql(
-        `
-        mutation (
-          $project: ID!
-          $item: ID!
-          $targetField: ID!
-          $targetFieldValue: String!
-        ) {
-          updateProjectNextItemField(input: {
-            projectId: $project
-            itemId: $item
-            fieldId: $targetField
-            value: $targetFieldValue
-          }) {
-            projectNextItem {
-              id
-            }
-          }
-        }
-      `,
-        { project: this.projectNumber, item: issueCardId, targetField: "Status", targetFieldValue: state },
-      );
-    } */
+  /* 
+  changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
+    return this.gql(UPDATE_STATE_IN_PROJECT_QUERY, {
+      project: this.projectNumber,
+      item: issueCardId,
+      targetField: "Status",
+      targetFieldValue: state,
+    });
+  } */
 
   /**
    * Fetches the node id from the project id and caches it.
@@ -73,25 +99,16 @@ export class ProjectKit implements IProjectApi {
 
     try {
       // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
-      const projectData = await this.gql<ProjectData>(
-        `
-      query($organization: String!, $number: Int!) {
-        organization(login: $organization){
-          projectV2(number: $number) {
-            id
-            title
-          }
-        }
-      }
-    `,
-        { organization: this.repoData.owner, number: this.projectNumber },
-      );
+      const projectData = await this.gql<ProjectData>(PROJECT_V2_QUERY, {
+        organization: this.repoData.owner,
+        number: this.projectNumber,
+      });
 
       this.projectNode = projectData.organization.projectV2;
 
       return projectData.organization.projectV2;
     } catch (e) {
-      this.logger.error("Failed while executing the FetchProjectId query");
+      this.logger.error("Failed while executing the 'PROJECT_V2_QUERY' query");
       throw e;
     }
   }
@@ -103,48 +120,19 @@ export class ProjectKit implements IProjectApi {
     targetField: string,
     targetFieldValue: string,
   ): Promise<void> {
-    await this.gql(
-      `
-      mutation (
-        $project: ID!
-        $item: ID!
-        $targetField: ID!
-        $targetFieldValue: String!
-      ) {
-        updateProjectNextItemField(input: {
-          projectId: $project
-          itemId: $item
-          fieldId: $targetField
-          value: $targetFieldValue
-        }) {
-          projectNextItem {
-            id
-          }
-        }
-      }
-    `,
-      { project, item, targetField, targetFieldValue },
-    );
+    await this.gql(UPDATE_PROJECT_NEXT_ITEM_FIELD_QUERY, { project, item, targetField, targetFieldValue });
   }
 
   async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
     try {
       const migration = await this.gql<{ addProjectV2ItemById: { item: { id: string } } }>(
-        `
-          mutation($project: ID!, $issue: ID!) {
-            addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
-              item {
-                id
-              }
-            }
-          }
-        `,
+        ADD_PROJECT_V2_ITEM_BY_ID_QUERY,
         { project: projectId, issue: issue.node_id },
       );
 
       return !!migration.addProjectV2ItemById.item.id;
     } catch (e) {
-      this.logger.error("Failed while executing 'addProjectV2ItemById' query");
+      this.logger.error("Failed while executing 'ADD_PROJECT_V2_ITEM_BY_ID_QUERY' query");
       throw e;
     }
   }
