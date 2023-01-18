@@ -49,23 +49,6 @@ mutation (
 }
 `;
 
-interface ProjectData {
-  organization: {
-    projectV2: NodeData;
-    // {
-    //   id: string;
-    //   title: string;
-    //   // fields: {
-    //   //   nodes: {
-    //   //     id: string;
-    //   //     name: string;
-    //   //     settings?: string | null;
-    //   //   }[];
-    //   // };
-    // };
-  };
-}
-
 /**
  * Instance that manages the GitHub's project api
  * ? Octokit.js doesn't support Project v2 API yet so we need to use graphQL
@@ -103,7 +86,7 @@ export class ProjectKit implements IProjectApi {
 
     try {
       // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
-      const projectData = await this.gql<ProjectData>(PROJECT_V2_QUERY, {
+      const projectData = await this.gql<{ organization: { projectV2: NodeData } }>(PROJECT_V2_QUERY, {
         organization: this.repoData.owner,
         number: this.projectNumber,
       });
