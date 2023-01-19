@@ -7,7 +7,7 @@ export class CoreLogger implements ILogger {
   info(message: string): void {
     core.info(message);
   }
-  warning(message: string): void {
+  warning(message: string | Error): void {
     core.warning(message);
   }
   error(message: string | Error): void {

@@ -6,19 +6,24 @@ import { IssueApi } from "./github/issueKit";
 import { ProjectKit } from "./github/projectKit";
 import { GitHubContext, Synchronizer } from "./synchronizer";
 
+const getProjectFieldValues = (): { field: string; value: string } | undefined => {
+  const field = getInput("project_field");
+  const value = getInput("project_value");
+
+  if (field && value) {
+    return { field, value };
+  } else {
+    debug("'project_field' and 'project_value' are empty.");
+  }
+};
+
 //* * Generates the class that will handle the project logic */
 const generateSynchronizer = (): Synchronizer => {
   const repoToken = getInput("GITHUB_TOKEN", { required: true });
   const orgToken = getInput("PROJECT_TOKEN", { required: true });
 
   const projectNumber = parseInt(getInput("project", { required: true }));
-  // TODO: Add support for custom project fields (https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields)
-  const projectField = getInput("project_field");
-  const projectValue = getInput("project_value");
-  debug(`Values are: projectField: '${projectField}', projectValue: '${projectValue}'`);
-  if (!projectField && !projectValue) {
-    throw new Error("VALUES ARE EMPTY!");
-  }
+  const projectFields = getProjectFieldValues();
 
   const { repo } = context;
 
@@ -26,10 +31,7 @@ const generateSynchronizer = (): Synchronizer => {
   const issueKit = new IssueApi(kit, repo);
   const projectGraphQl = getOctokit(orgToken).graphql.defaults({ headers: { authorization: `token ${orgToken}` } });
   const logger = new CoreLogger();
-  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger, {
-    field: projectField,
-    value: projectValue,
-  });
+  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger, projectFields);
 
   return new Synchronizer(issueKit, projectKit, logger);
 };

@@ -34,7 +34,7 @@ export interface IIssues {
 
 export interface ILogger {
   info(message: string): void;
-  warning(message: string): void;
+  warning(message: string | Error): void;
   error(message: string | Error): void;
   /** Only posts messages if the action is ran in debug mode */
   debug(message: string): void;

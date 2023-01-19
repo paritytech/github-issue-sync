@@ -184,31 +184,67 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
+  /**
+   * Fetches the available fields for a project board and filters to find the node ids of the field and value
+   * If either the field or the value don't exist, it will fail with an exception
+   * @param project The node data of the project
+   * @param projectFields The literal names of the fields to be modified
+   * @returns The id of both the field and the value
+   */
+  async fetchProjectFieldNodeValues(
+    project: NodeData,
+    projectFields?: ProjectFields,
+  ): Promise<{ fieldId: string; valueId: string }> {
+    if (!projectFields) {
+      throw new Error("'projectsFields' is null!");
+    }
+
+    const projectFieldData = await this.getProjectFields(project.id);
+
+    const { field, value } = projectFields;
+
+    // ? Should we use .localeCompare here?
+    const customField = projectFieldData.find(({ name }) => name.toUpperCase() === field.toUpperCase());
+
+    // check that this custom field exists and it has available options to set up
+    if (!customField) {
+      throw new Error(`Field ${field} does not exist!`);
+    } else if (!customField.options) {
+      throw new Error(`Field ${field} does not have any available options!.` + "Please add options to set values");
+    }
+
+    this.logger.debug(`Custom field '${field}' was found.`);
+
+    // search for the node element with the correct name.
+    const fieldOption = customField.options.find(({ name }) => name.toUpperCase() === value.toUpperCase());
+    if (!fieldOption) {
+      const valuesArray = customField.options.map((options) => options.name);
+      throw new Error(`Project value '${value}' does not exist. Available values are ${JSON.stringify(valuesArray)}`);
+    }
+
+    this.logger.debug(`Field options '${value}' was found.`);
+
+    return { fieldId: customField.id, valueId: fieldOption.id };
+  }
+
   async addIssueToProject(issue: Issue, project: NodeData): Promise<boolean> {
     this.logger.info(`Syncing issue #${issue.number} for ${project.title}`);
 
     const issueCardId = await this.assignIssueToProject(issue, project.id);
 
     if (this.projectFields) {
-      const { field, value } = this.projectFields;
-      const projectFields = await this.getProjectFields(project.id);
-      const fieldValues = projectFields.find((pf) => pf.name === this.projectFields?.field);
-      if (!fieldValues) {
-        throw new Error(`Field ${field} does not exist!`);
-      } else if (!fieldValues.options) {
-        throw new Error(`Field ${field} does not have any available options!.` + "Please add options to set values");
+      let fieldValues: ProjectFields;
+      try {
+        const { fieldId, valueId } = await this.fetchProjectFieldNodeValues(project, this.projectFields);
+        fieldValues = { field: fieldId, value: valueId };
+      } catch (e) {
+        this.logger.notice("Failed fetching project values. Skipping project field assignment.");
+        this.logger.warning(e as Error);
+        return false;
       }
 
-      const index = fieldValues.options.findIndex((fv) => fv.name === value);
-      if (index < 0) {
-        const valuesArray = fieldValues.options.map((options) => options.name);
-        throw new Error(`Project value does not exist. Available values are ${JSON.stringify(valuesArray)}`);
-      }
+      await this.changeIssueStateInProject(issueCardId, project.id, fieldValues);
 
-      await this.changeIssueStateInProject(issueCardId, project.id, {
-        field: fieldValues.id,
-        value: fieldValues.options[index].id,
-      });
       return true;
     }
 
