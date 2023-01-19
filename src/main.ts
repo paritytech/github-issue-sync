@@ -22,7 +22,10 @@ const generateSynchronizer = (): Synchronizer => {
   const issueKit = new IssueApi(kit, repo);
   const projectGraphQl = getOctokit(orgToken).graphql.defaults({ headers: { authorization: `token ${orgToken}` } });
   const logger = new CoreLogger();
-  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger, { field: projectField, value: projectValue });
+  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger, {
+    field: projectField,
+    value: projectValue,
+  });
 
   return new Synchronizer(issueKit, projectKit, logger);
 };

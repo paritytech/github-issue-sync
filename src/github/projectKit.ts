@@ -75,6 +75,8 @@ export class ProjectKit implements IProjectApi {
         targetField: fields.field,
         targetFieldValue: fields.value,
       });
+
+      this.logger.debug("Returned " + JSON.stringify(op));
     } catch (e) {
       this.logger.error("Failed while executing the 'UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY' query");
       throw e;
