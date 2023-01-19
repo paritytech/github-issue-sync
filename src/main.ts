@@ -1,4 +1,4 @@
-import { debug, getInput, info, setFailed } from "@actions/core";
+import { debug, error, getInput, info, setFailed } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
 import { CoreLogger } from "./github/CoreLogger";
@@ -31,9 +31,9 @@ const generateSynchronizer = (): Synchronizer => {
   const issueKit = new IssueApi(kit, repo);
   const projectGraphQl = getOctokit(orgToken).graphql.defaults({ headers: { authorization: `token ${orgToken}` } });
   const logger = new CoreLogger();
-  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger, projectFields);
+  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger);
 
-  return new Synchronizer(issueKit, projectKit, logger);
+  return new Synchronizer(issueKit, projectKit, logger, projectFields);
 };
 
 const synchronizer = generateSynchronizer();
@@ -50,5 +50,11 @@ const parsedContext: GitHubContext = {
 
 synchronizer
   .synchronizeIssue(parsedContext)
-  .then(() => info("Finished"))
+  .then((result) => {
+    if (result) {
+      info("Operation finished successfully!");
+    } else {
+      error("There was a problem. Check logs for more information!");
+    }
+  })
   .catch(setFailed);

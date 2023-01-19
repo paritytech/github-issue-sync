@@ -1,9 +1,8 @@
 import { graphql } from "@octokit/graphql";
 
-import { ILogger, IProjectApi, Issue, Repository } from "./types";
+import { FieldValues, ILogger, IProjectApi, Issue, Repository } from "./types";
 
 type NodeData = { id: string; title: string };
-type ProjectFields = { field: string; value: string };
 type FieldData = { name: string; id: string; options?: { name: string; id: string }[] };
 
 export const PROJECT_V2_QUERY: string = `
@@ -100,13 +99,12 @@ export class ProjectKit implements IProjectApi {
     private readonly repoData: Repository,
     private readonly projectNumber: number,
     private readonly logger: ILogger,
-    private readonly projectFields?: ProjectFields,
   ) {}
 
-  async changeIssueStateInProject(issueCardId: string, projectNodeId: string, fields: ProjectFields): Promise<void> {
+  async changeIssueStateInProject(issueCardId: string, project: NodeData, fields: FieldValues): Promise<void> {
     try {
       const op = await this.gql(UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY, {
-        project: projectNodeId,
+        project: project.id,
         item: issueCardId,
         targetField: fields.field,
         targetFieldValue: fields.value,
@@ -136,10 +134,6 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
-  /**
-   * Fetches the node id from the project id and caches it.
-   * @returns node_id of the project. This value never changes so caching it per instance is effective
-   */
   async fetchProjectData(): Promise<NodeData> {
     if (this.projectNode) {
       return this.projectNode;
@@ -184,17 +178,7 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
-  /**
-   * Fetches the available fields for a project board and filters to find the node ids of the field and value
-   * If either the field or the value don't exist, it will fail with an exception
-   * @param project The node data of the project
-   * @param projectFields The literal names of the fields to be modified
-   * @returns The id of both the field and the value
-   */
-  async fetchProjectFieldNodeValues(
-    project: NodeData,
-    projectFields?: ProjectFields,
-  ): Promise<{ fieldId: string; valueId: string }> {
+  async fetchProjectFieldNodeValues(project: NodeData, projectFields?: FieldValues): Promise<FieldValues> {
     if (!projectFields) {
       throw new Error("'projectsFields' is null!");
     }
@@ -224,46 +208,12 @@ export class ProjectKit implements IProjectApi {
 
     this.logger.debug(`Field options '${value}' was found.`);
 
-    return { fieldId: customField.id, valueId: fieldOption.id };
+    return { field: customField.id, value: fieldOption.id };
   }
 
-  async addIssueToProject(issue: Issue, project: NodeData): Promise<boolean> {
+  async assignIssue(issue: Issue, project: NodeData): Promise<string> {
     this.logger.info(`Syncing issue #${issue.number} for ${project.title}`);
 
-    const issueCardId = await this.assignIssueToProject(issue, project.id);
-
-    if (this.projectFields) {
-      let fieldValues: ProjectFields;
-      try {
-        const { fieldId, valueId } = await this.fetchProjectFieldNodeValues(project, this.projectFields);
-        fieldValues = { field: fieldId, value: valueId };
-      } catch (e) {
-        this.logger.notice("Failed fetching project values. Skipping project field assignment.");
-        this.logger.warning(e as Error);
-        return false;
-      }
-
-      await this.changeIssueStateInProject(issueCardId, project.id, fieldValues);
-
-      return true;
-    }
-
-    return !!issueCardId;
-  }
-
-  async assignIssue(issue: Issue): Promise<boolean> {
-    const project = await this.fetchProjectData();
-
-    return await this.addIssueToProject(issue, project);
-
-    // TODO: Assign targetField
-  }
-
-  async assignIssues(issues: Issue[]): Promise<boolean[]> {
-    const project = await this.fetchProjectData();
-
-    const issueAssigment = issues.map((issue) => this.addIssueToProject(issue, project));
-
-    return await Promise.all(issueAssigment);
+    return await this.assignIssueToProject(issue, project.id);
   }
 }

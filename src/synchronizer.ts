@@ -1,4 +1,4 @@
-import { IIssues, ILogger, IProjectApi, Issue } from "./github/types";
+import { FieldValues, IIssues, ILogger, IProjectApi, Issue, NodeData } from "./github/types";
 
 // type IssueEvent = "opened" | "deleted" | "closed" | "reopened" | "labeled" | "unlabeled" | "transfered";
 
@@ -17,6 +17,7 @@ export class Synchronizer {
     private readonly issueKit: IIssues,
     private readonly projectKit: IProjectApi,
     private readonly logger: ILogger,
+    private readonly customField?: FieldValues,
   ) {}
 
   async synchronizeIssue(context: GitHubContext): Promise<boolean> {
@@ -39,6 +40,16 @@ export class Synchronizer {
     }
   }
 
+  async getCustomFieldNodeData(customField: FieldValues, project: NodeData): Promise<FieldValues | null> {
+    try {
+      return await this.projectKit.fetchProjectFieldNodeValues(project, customField);
+    } catch (e) {
+      this.logger.notice("Failed fetching project values. Skipping project field assignment.");
+      this.logger.warning(e as Error);
+      return null;
+    }
+  }
+
   async updateAllIssues(excludeClosed: boolean = false): Promise<boolean> {
     const issues = await this.issueKit.getAllIssues(excludeClosed);
     if (issues?.length === 0) {
@@ -46,11 +57,41 @@ export class Synchronizer {
       return false;
     }
     this.logger.info(`Updating ${issues.length} issues`);
-    const issueAssigment = await this.projectKit.assignIssues(issues);
-    return issueAssigment.every((s) => s);
+
+    const projectNode = await this.projectKit.fetchProjectData();
+    const issuesAssigmentPromises = issues.map((issue) => this.projectKit.assignIssue(issue, projectNode));
+    const issuesCardIds = await Promise.all(issuesAssigmentPromises);
+    this.logger.debug(`Finished assigning ${issuesCardIds.length} issues`);
+    if (this.customField) {
+      const customFieldNodeData = await this.getCustomFieldNodeData(this.customField, projectNode);
+      if (customFieldNodeData) {
+        this.logger.debug("Found custom field node data for " + JSON.stringify(this.customField));
+        const assignCustomFieldPromise = issuesCardIds.map((ici) =>
+          this.projectKit.changeIssueStateInProject(ici, projectNode, customFieldNodeData),
+        );
+        await Promise.all(assignCustomFieldPromise);
+        return true;
+      }
+      // something failed while fetching the custom field node data
+      return false;
+    }
+
+    return true;
   }
 
   async updateOneIssue(issue: Issue): Promise<boolean> {
-    return await this.projectKit.assignIssue(issue);
+    const projectNode = await this.projectKit.fetchProjectData();
+    const issueId = await this.projectKit.assignIssue(issue, projectNode);
+    if (this.customField) {
+      const customFieldNodeData = await this.getCustomFieldNodeData(this.customField, projectNode);
+      if (customFieldNodeData) {
+        await this.projectKit.changeIssueStateInProject(issueId, projectNode, customFieldNodeData);
+      } else {
+        // something failed while fetching the custom field node data
+        return false;
+      }
+    }
+
+    return true;
   }
 }
