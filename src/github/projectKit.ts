@@ -2,24 +2,52 @@ import { graphql } from "@octokit/graphql";
 
 import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
-interface ProjectData {
-  organization: {
-    projectNext: {
-      id: string;
-      fields: {
-        nodes: {
-          id: string;
-          name: string;
-          settings?: string | null;
-        }[];
-      };
-    };
-  };
-}
+type NodeData = { id: string; title: string };
 
-interface CreatedProjectItemForIssue {
-  addProjectNextItem: { projectNextItem: { id: string } };
+export const PROJECT_V2_QUERY: string = `
+query($organization: String!, $number: Int!) {
+  organization(login: $organization){
+    projectV2(number: $number) {
+      id
+      title
+    }
+  }
 }
+`;
+
+export const ADD_PROJECT_V2_ITEM_BY_ID_QUERY: string = `
+mutation($project: ID!, $issue: ID!) {
+  addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+    item {
+      id
+    }
+  }
+}
+`;
+
+export const UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY: string = `
+mutation (
+  $project: ID!
+  $item: ID!
+  $targetField: ID!
+  $targetFieldValue: String!
+) {
+  updateProjectV2ItemFieldValue(
+    input: {
+      projectId: $project
+      itemId: $item
+      fieldId: $targetField
+      value: {
+        singleSelectOptionId: $targetFieldValue
+        }
+      }
+    ) {
+    projectV2Item {
+      id
+    }
+  }
+}
+`;
 
 /**
  * Instance that manages the GitHub's project api
@@ -27,7 +55,7 @@ interface CreatedProjectItemForIssue {
  * Used this blog post as a reference for the queries: https://www.cloudwithchris.com/blog/automate-adding-gh-issues-projects-beta/
  */
 export class ProjectKit implements IProjectApi {
-  private projectNodeId: string | null = null;
+  private projectNode: NodeData | null = null;
 
   /** Requires an instance with a PAT with the 'write:org' permission enabled */
   constructor(
@@ -37,122 +65,83 @@ export class ProjectKit implements IProjectApi {
     private readonly logger: ILogger,
   ) {}
 
-  /*   changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
-      return this.gql(
-        `
-        mutation (
-          $project: ID!
-          $item: ID!
-          $targetField: ID!
-          $targetFieldValue: String!
-        ) {
-          updateProjectNextItemField(input: {
-            projectId: $project
-            itemId: $item
-            fieldId: $targetField
-            value: $targetFieldValue
-          }) {
-            projectNextItem {
-              id
-            }
-          }
-        }
-      `,
-        { project: this.projectNumber, item: issueCardId, targetField: "Status", targetFieldValue: state },
-      );
-    } */
+  /* 
+  changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
+    return this.gql(UPDATE_STATE_IN_PROJECT_QUERY, {
+      project: this.projectNumber,
+      item: issueCardId,
+      targetField: "Status",
+      targetFieldValue: state,
+    });
+  } */
 
   /**
    * Fetches the node id from the project id and caches it.
    * @returns node_id of the project. This value never changes so caching it per instance is effective
    */
-  async fetchProjectId(): Promise<string> {
-    if (this.projectNodeId) {
-      return this.projectNodeId;
+  async fetchProjectData(): Promise<NodeData> {
+    if (this.projectNode) {
+      return this.projectNode;
     }
 
-    // Source: https://docs.github.com/en/graphql/reference/objects#projectnext
-    const projectData = await this.gql<ProjectData>(
-      `
-      query($organization: String!, $number: Int!) {
-        organization(login: $organization){
-          projectNext(number: $number) {
-            id
-            fields(first: 20) {
-              nodes {
-                id
-                name
-                settings
-              }
-            }
-          }
-        }
-      }
-    `,
-      { organization: this.repoData.owner, number: this.projectNumber },
-    );
+    try {
+      // Source: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects#using-variables
+      const projectData = await this.gql<{ organization: { projectV2: NodeData } }>(PROJECT_V2_QUERY, {
+        organization: this.repoData.owner,
+        number: this.projectNumber,
+      });
 
-    this.projectNodeId = projectData.organization.projectNext.id;
+      this.projectNode = projectData.organization.projectV2;
 
-    return projectData.organization.projectNext.id;
+      return projectData.organization.projectV2;
+    } catch (e) {
+      this.logger.error("Failed while executing the 'PROJECT_V2_QUERY' query");
+      throw e;
+    }
   }
 
-  // step three
   async updateProjectNextItemField(
     project: string,
     item: string,
     targetField: string,
     targetFieldValue: string,
   ): Promise<void> {
-    await this.gql(
-      `
-      mutation (
-        $project: ID!
-        $item: ID!
-        $targetField: ID!
-        $targetFieldValue: String!
-      ) {
-        updateProjectNextItemField(input: {
-          projectId: $project
-          itemId: $item
-          fieldId: $targetField
-          value: $targetFieldValue
-        }) {
-          projectNextItem {
-            id
-          }
-        }
-      }
-    `,
-      { project, item, targetField, targetFieldValue },
-    );
+    await this.gql(UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY, { project, item, targetField, targetFieldValue });
   }
 
   async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
-    const migration = await this.gql<CreatedProjectItemForIssue>(
-      `
-          mutation($project: ID!, $issue: ID!) {
-            addProjectNextItem(input: {projectId: $project, contentId: $issue}) {
-              projectNextItem {
-                id
-              }
-            }
-          }
-        `,
-      { project: projectId, issue: issue.node_id },
-    );
+    try {
+      const migration = await this.gql<{ addProjectV2ItemById: { item: { id: string } } }>(
+        ADD_PROJECT_V2_ITEM_BY_ID_QUERY,
+        { project: projectId, issue: issue.node_id },
+      );
 
-    // TODO: Check what is this ID
-    return !!migration.addProjectNextItem.projectNextItem.id;
+      return !!migration.addProjectV2ItemById.item.id;
+    } catch (e) {
+      this.logger.error("Failed while executing 'ADD_PROJECT_V2_ITEM_BY_ID_QUERY' query");
+      throw e;
+    }
+  }
+
+  async addIssueToProject(issue: Issue, project: NodeData): Promise<boolean> {
+    this.logger.info(`Syncing issue #${issue.number} for ${project.title}`);
+
+    return await this.assignIssueToProject(issue, project.id);
   }
 
   async assignIssue(issue: Issue): Promise<boolean> {
-    const projectId = await this.fetchProjectId();
+    const project = await this.fetchProjectData();
 
-    this.logger.info(`Syncing issue #${issue.number} for ${this.projectNumber}`);
-
-    return await this.assignIssueToProject(issue, projectId);
+    return await this.addIssueToProject(issue, project);
 
     // TODO: Assign targetField
+  }
+
+  async assignIssues(issues: Issue[]): Promise<boolean[]> {
+    const project = await this.fetchProjectData();
+
+    const issueAssigment = issues.map((issue) => this.addIssueToProject(issue, project));
+
+    return await Promise.all(issueAssigment);
   }
 }

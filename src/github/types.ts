@@ -5,10 +5,15 @@ export type Issue = { number: number; node_id: string };
 export interface IProjectApi {
   /**
    * Assign an issue to a project
-   * @param issueNodeId The issue node_id (which differs from the issue id)
-   * @param projectId The project id (found in github.com/repo/projects/<ID>)
+   * @param issue The issue object which has the number and the node_id
    */
   assignIssue(issue: Issue): Promise<boolean>;
+
+  /**
+   * Assign several issues to a project
+   * @param issues The issue object collection which has the number and the node_id
+   */
+  assignIssues(issues: Issue[]): Promise<boolean[]>;
   // getProjectIdFromIssue(issueId: number): Promise<number>;
   // changeIssueStateInProject(issueId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<boolean>;
 }
@@ -24,7 +29,7 @@ export interface IIssues {
    * Returns the node_id for all the issues available in the repository
    * @param includeClosed exclude issues which are closed from the data agregation.
    */
-  getAllIssuesId(excludeClosed: boolean): Promise<Issue[]>;
+  getAllIssues(excludeClosed: boolean): Promise<Issue[]>;
 }
 
 export interface ILogger {
