@@ -67,15 +67,19 @@ export class ProjectKit implements IProjectApi {
     private readonly projectFields?: ProjectFields,
   ) {}
 
-  /* 
-  changeIssueStateInProject(issueCardId: number, state: "todo" | "in progress" | "blocked" | "done"): Promise<void> {
-    return this.gql(UPDATE_STATE_IN_PROJECT_QUERY, {
-      project: this.projectNumber,
-      item: issueCardId,
-      targetField: "Status",
-      targetFieldValue: state,
-    });
-  } */
+  async changeIssueStateInProject(issueCardId: string, projectNodeId: string, fields: ProjectFields): Promise<void> {
+    try {
+      const op = await this.gql(UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY, {
+        project: projectNodeId,
+        item: issueCardId,
+        targetField: fields.field,
+        targetFieldValue: fields.value,
+      });
+    } catch (e) {
+      this.logger.error("Failed while executing the 'UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY' query");
+      throw e;
+    }
+  }
 
   /**
    * Fetches the node id from the project id and caches it.
@@ -111,14 +115,14 @@ export class ProjectKit implements IProjectApi {
     await this.gql(UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY, { project, item, targetField, targetFieldValue });
   }
 
-  async assignIssueToProject(issue: Issue, projectId: string): Promise<boolean> {
+  async assignIssueToProject(issue: Issue, projectId: string): Promise<string> {
     try {
       const migration = await this.gql<{ addProjectV2ItemById: { item: { id: string } } }>(
         ADD_PROJECT_V2_ITEM_BY_ID_QUERY,
         { project: projectId, issue: issue.node_id },
       );
 
-      return !!migration.addProjectV2ItemById.item.id;
+      return migration.addProjectV2ItemById.item.id;
     } catch (e) {
       this.logger.error("Failed while executing 'ADD_PROJECT_V2_ITEM_BY_ID_QUERY' query");
       throw e;
@@ -128,7 +132,14 @@ export class ProjectKit implements IProjectApi {
   async addIssueToProject(issue: Issue, project: NodeData): Promise<boolean> {
     this.logger.info(`Syncing issue #${issue.number} for ${project.title}`);
 
-    return await this.assignIssueToProject(issue, project.id);
+    const issueCardId = await this.assignIssueToProject(issue, project.id);
+
+    if (this.projectFields) {
+      await this.changeIssueStateInProject(issueCardId, project.id, this.projectFields);
+      return true;
+    }
+
+    return !!issueCardId;
   }
 
   async assignIssue(issue: Issue): Promise<boolean> {
