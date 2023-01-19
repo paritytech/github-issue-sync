@@ -10,3 +10,9 @@ updates:
         # Ignore version upgrades.
         # Security updates are nevertheless. unaffected by this setting and will continue to work.
         update-types: ["version-update:semver-patch", "version-update:semver-minor", "version-update:semver-major"]
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    allow:
+      - dependency-name: "@octokit/graphql-schema"
