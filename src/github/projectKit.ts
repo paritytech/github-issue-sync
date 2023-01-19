@@ -3,6 +3,7 @@ import { graphql } from "@octokit/graphql";
 import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
 type NodeData = { id: string; title: string };
+type ProjectFields = { field: string; value: string };
 
 export const PROJECT_V2_QUERY: string = `
 query($organization: String!, $number: Int!) {
@@ -63,6 +64,7 @@ export class ProjectKit implements IProjectApi {
     private readonly repoData: Repository,
     private readonly projectNumber: number,
     private readonly logger: ILogger,
+    private readonly projectFields?: ProjectFields,
   ) {}
 
   /* 

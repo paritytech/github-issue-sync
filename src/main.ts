@@ -13,6 +13,8 @@ const generateSynchronizer = (): Synchronizer => {
 
   const projectNumber = parseInt(getInput("project", { required: true }));
   // TODO: Add support for custom project fields (https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields)
+  const projectField = getInput("project-field");
+  const projectValue = getInput("project-value");
 
   const { repo } = context;
 
@@ -20,7 +22,7 @@ const generateSynchronizer = (): Synchronizer => {
   const issueKit = new IssueApi(kit, repo);
   const projectGraphQl = getOctokit(orgToken).graphql.defaults({ headers: { authorization: `token ${orgToken}` } });
   const logger = new CoreLogger();
-  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger);
+  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger, { field: projectField, value: projectValue });
 
   return new Synchronizer(issueKit, projectKit, logger);
 };
