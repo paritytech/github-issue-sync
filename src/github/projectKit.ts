@@ -4,6 +4,7 @@ import { ILogger, IProjectApi, Issue, Repository } from "./types";
 
 type NodeData = { id: string; title: string };
 type ProjectFields = { field: string; value: string };
+type FieldData = { name: string; id: string; options?: { name: string; id: string }[] };
 
 export const PROJECT_V2_QUERY: string = `
 query($organization: String!, $number: Int!) {
@@ -21,6 +22,41 @@ mutation($project: ID!, $issue: ID!) {
   addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
     item {
       id
+    }
+  }
+}
+`;
+
+export const PROJECT_FIELD_ID_QUERY: string = `
+query($project: ID!) {
+  node(id: $project) {
+    ... on ProjectV2 {
+      fields(first: 20) {
+        nodes {
+          ... on ProjectV2Field {
+            id
+            name
+          }
+          ... on ProjectV2IterationField {
+            id
+            name
+            configuration {
+              iterations {
+                startDate
+                id
+              }
+            }
+          }
+          ... on ProjectV2SingleSelectField {
+            id
+            name
+            options {
+              id
+              name
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -83,6 +119,22 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
+  async getProjectFields(projectId: string): Promise<void> {
+    try {
+      type returnType = { node: { fields: { nodes: FieldData[] } } };
+      const projectData = await this.gql<returnType>(PROJECT_FIELD_ID_QUERY, { project: projectId });
+
+      // this.logger.debug("field node data: " + JSON.stringify(projectData));
+      // this.logger.debug("node data: " + JSON.stringify(projectData.node));
+      // this.logger.debug("node field data: " + JSON.stringify(projectData.node.fields));
+      // this.logger.debug("node field nodes data: " + JSON.stringify(projectData.node.fields.nodes));
+      this.logger.debug("correct node data: " + JSON.stringify(projectData.node.fields.nodes[0]));
+    } catch (e) {
+      this.logger.error("Failed while executing the 'PROJECT_V2_QUERY' query");
+      throw e;
+    }
+  }
+
   /**
    * Fetches the node id from the project id and caches it.
    * @returns node_id of the project. This value never changes so caching it per instance is effective
@@ -135,6 +187,8 @@ export class ProjectKit implements IProjectApi {
     this.logger.info(`Syncing issue #${issue.number} for ${project.title}`);
 
     const issueCardId = await this.assignIssueToProject(issue, project.id);
+
+    await this.getProjectFields(project.id);
 
     if (this.projectFields) {
       await this.changeIssueStateInProject(issueCardId, project.id, this.projectFields);
