@@ -40,10 +40,14 @@ export class Synchronizer {
   }
 
   async updateAllIssues(excludeClosed: boolean = false): Promise<boolean> {
-    const issuesIds = await this.issueKit.getAllIssuesId(excludeClosed);
-    const updatePromises = issuesIds.map((nodeId) => this.projectKit.assignIssue(nodeId));
-    const syncs = await Promise.all(updatePromises);
-    return syncs.every((s) => s);
+    const issues = await this.issueKit.getAllIssues(excludeClosed);
+    if (issues?.length === 0) {
+      this.logger.notice("No issues found");
+      return false;
+    }
+    this.logger.info(`Updating ${issues.length} issues`);
+    const issueAssigment = await this.projectKit.assignIssues(issues);
+    return issueAssigment.every((s) => s);
   }
 
   async updateOneIssue(issue: Issue): Promise<boolean> {

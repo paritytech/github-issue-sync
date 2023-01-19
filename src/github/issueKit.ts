@@ -12,7 +12,7 @@ export class IssueApi implements IIssues {
     return issueData.data.state === "open" ? "open" : "closed";
   }
 
-  async getAllIssuesId(excludeClosed: boolean): Promise<Issue[]> {
+  async getAllIssues(excludeClosed: boolean): Promise<Issue[]> {
     const allIssues = await this.octokit.rest.issues.listForRepo({
       ...this.repoData,
       state: excludeClosed ? "open" : "all",
