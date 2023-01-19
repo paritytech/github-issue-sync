@@ -119,16 +119,17 @@ export class ProjectKit implements IProjectApi {
     }
   }
 
-  async getProjectFields(projectId: string): Promise<void> {
+  /**
+   * Get all the project fields in a project, with their node ids and available options
+   * @returns A collection of all the fields available in the issue item
+   */
+  async getProjectFields(projectId: string): Promise<FieldData[]> {
     try {
       type returnType = { node: { fields: { nodes: FieldData[] } } };
       const projectData = await this.gql<returnType>(PROJECT_FIELD_ID_QUERY, { project: projectId });
 
-      // this.logger.debug("field node data: " + JSON.stringify(projectData));
-      // this.logger.debug("node data: " + JSON.stringify(projectData.node));
-      // this.logger.debug("node field data: " + JSON.stringify(projectData.node.fields));
-      // this.logger.debug("node field nodes data: " + JSON.stringify(projectData.node.fields.nodes));
       this.logger.debug("correct node data: " + JSON.stringify(projectData.node.fields.nodes[0]));
+      return projectData.node.fields.nodes;
     } catch (e) {
       this.logger.error("Failed while executing the 'PROJECT_V2_QUERY' query");
       throw e;
@@ -188,10 +189,26 @@ export class ProjectKit implements IProjectApi {
 
     const issueCardId = await this.assignIssueToProject(issue, project.id);
 
-    await this.getProjectFields(project.id);
-
     if (this.projectFields) {
-      await this.changeIssueStateInProject(issueCardId, project.id, this.projectFields);
+      const { field, value } = this.projectFields;
+      const projectFields = await this.getProjectFields(project.id);
+      const fieldValues = projectFields.find((pf) => pf.name === this.projectFields?.field);
+      if (!fieldValues) {
+        throw new Error(`Field ${field} does not exist!`);
+      } else if (!fieldValues.options) {
+        throw new Error(`Field ${field} does not have any available options!.` + "Please add options to set values");
+      }
+
+      const index = fieldValues.options.findIndex((fv) => fv.name === value);
+      if (index < 0) {
+        const valuesArray = fieldValues.options.map((options) => options.name);
+        throw new Error(`Project value does not exist. Available values are ${JSON.stringify(valuesArray)}`);
+      }
+
+      await this.changeIssueStateInProject(issueCardId, project.id, {
+        field: fieldValues.id,
+        value: fieldValues.options[index].id,
+      });
       return true;
     }
 

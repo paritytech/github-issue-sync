@@ -9,11 +9,11 @@ inputs:
     required: true
     description: The number of the project which the issues will be synced to
     type: number
-  project-field:
+  project_field:
     required: false
     description: The name of the project field which the issue will be assigned to
     type: string
-  project-value:
+  project_value:
     required: false
     description: The value which will be set in the field
     type: string

@@ -1,4 +1,4 @@
-import { getInput, info, setFailed } from "@actions/core";
+import { debug, getInput, info, setFailed } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
 import { CoreLogger } from "./github/CoreLogger";
@@ -13,8 +13,12 @@ const generateSynchronizer = (): Synchronizer => {
 
   const projectNumber = parseInt(getInput("project", { required: true }));
   // TODO: Add support for custom project fields (https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields)
-  const projectField = getInput("project-field");
-  const projectValue = getInput("project-value");
+  const projectField = getInput("project_field");
+  const projectValue = getInput("project_value");
+  debug(`Values are: projectField: '${projectField}', projectValue: '${projectValue}'`);
+  if (!projectField && !projectValue) {
+    throw new Error("VALUES ARE EMPTY!");
+  }
 
   const { repo } = context;
 
