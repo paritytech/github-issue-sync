@@ -17,7 +17,7 @@ export interface IProjectApi {
    * Assign an issue to a project
    * @param issue The issue object which has the number and the node_id
    */
-  assignIssue(issue: Issue, project: NodeData, field?: FieldValues): Promise<string>;
+  assignIssue(issue: Issue, project: NodeData): Promise<string>;
   /**
    * Fetches the available fields for a project board and filters to find the node ids of the field and value
    * If either the field or the value don't exist, it will fail with an exception

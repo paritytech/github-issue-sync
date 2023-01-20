@@ -40,7 +40,14 @@ export class Synchronizer {
     }
   }
 
-  async getCustomFieldNodeData(customField: FieldValues, project: NodeData): Promise<FieldValues | null> {
+  /**
+   * Gets the field node data ids to set custom fields
+   * This method can fail when it doesn't find the correct information so, instead of throwing, we log the error
+   * @param project Project node data. Should be obtained from project kit
+   * @param customField key value pair with the names of the fields. Not case sensitive
+   * @returns Returns a key value pair with the node id of both the field and the value or null if the application threw an error
+   */
+  private async getCustomFieldNodeData(project: NodeData, customField: FieldValues): Promise<FieldValues | null> {
     try {
       return await this.projectKit.fetchProjectFieldNodeValues(project, customField);
     } catch (e) {
@@ -50,7 +57,7 @@ export class Synchronizer {
     }
   }
 
-  async updateAllIssues(excludeClosed: boolean = false): Promise<boolean> {
+  private async updateAllIssues(excludeClosed: boolean = false): Promise<boolean> {
     const issues = await this.issueKit.getAllIssues(excludeClosed);
     if (issues?.length === 0) {
       this.logger.notice("No issues found");
@@ -63,7 +70,7 @@ export class Synchronizer {
     const issuesCardIds = await Promise.all(issuesAssigmentPromises);
     this.logger.debug(`Finished assigning ${issuesCardIds.length} issues`);
     if (this.customField) {
-      const customFieldNodeData = await this.getCustomFieldNodeData(this.customField, projectNode);
+      const customFieldNodeData = await this.getCustomFieldNodeData(projectNode, this.customField);
       if (customFieldNodeData) {
         this.logger.debug("Found custom field node data for " + JSON.stringify(this.customField));
         const assignCustomFieldPromise = issuesCardIds.map((ici) =>
@@ -79,13 +86,13 @@ export class Synchronizer {
     return true;
   }
 
-  async updateOneIssue(issue: Issue): Promise<boolean> {
+  private async updateOneIssue(issue: Issue): Promise<boolean> {
     const projectNode = await this.projectKit.fetchProjectData();
-    const issueId = await this.projectKit.assignIssue(issue, projectNode);
+    const issueCardId = await this.projectKit.assignIssue(issue, projectNode);
     if (this.customField) {
-      const customFieldNodeData = await this.getCustomFieldNodeData(this.customField, projectNode);
+      const customFieldNodeData = await this.getCustomFieldNodeData(projectNode, this.customField);
       if (customFieldNodeData) {
-        await this.projectKit.changeIssueStateInProject(issueId, projectNode, customFieldNodeData);
+        await this.projectKit.changeIssueStateInProject(issueCardId, projectNode, customFieldNodeData);
       } else {
         // something failed while fetching the custom field node data
         return false;
