@@ -23,7 +23,6 @@ const generateSynchronizer = (): Synchronizer => {
   const orgToken = getInput("PROJECT_TOKEN", { required: true });
 
   const projectNumber = parseInt(getInput("project", { required: true }));
-  const projectFields = getProjectFieldValues();
 
   const { repo } = context;
 
@@ -33,11 +32,12 @@ const generateSynchronizer = (): Synchronizer => {
   const logger = new CoreLogger();
   const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger);
 
-  return new Synchronizer(issueKit, projectKit, logger, projectFields);
+  return new Synchronizer(issueKit, projectKit, logger);
 };
 
 const synchronizer = generateSynchronizer();
 
+const projectFields = getProjectFieldValues();
 const { issue } = context.payload;
 const parsedContext: GitHubContext = {
   eventName: context.eventName,
@@ -46,6 +46,7 @@ const parsedContext: GitHubContext = {
     inputs: context.payload.inputs,
     issue: issue ? { number: issue.number, node_id: issue.node_id as string } : undefined,
   },
+  config: { customField: projectFields },
 };
 
 synchronizer

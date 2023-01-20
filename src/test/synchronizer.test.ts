@@ -74,25 +74,26 @@ describe("Synchronizer tests", () => {
 
     test("should fetch custom fields data", async () => {
       const [field, value] = ["a", "B"];
-      synchronizer = new Synchronizer(issueKit, projectKit, logger, { field, value });
-      await synchronizer.synchronizeIssue(ctx);
+      await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field, value } } });
       expect(projectKit.fetchProjectFieldNodeValues).toBeCalledWith(nodeData, { field, value });
     });
 
     test("should assign custom fields", async () => {
-      synchronizer = new Synchronizer(issueKit, projectKit, logger, { field: "c", value: "d" });
       const nodeValueData = { field: "eee", value: "fff" };
       projectKit.fetchProjectFieldNodeValues.mockResolvedValue(nodeValueData);
       const issueCardNodeId = "issue_node_id_example";
       projectKit.assignIssue.mockResolvedValue(issueCardNodeId);
-      expect(await synchronizer.synchronizeIssue(ctx)).toBeTruthy();
+      expect(
+        await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "c", value: "d" } } }),
+      ).toBeTruthy();
       expect(projectKit.changeIssueStateInProject).toBeCalledWith(issueCardNodeId, nodeData, nodeValueData);
     });
 
     test("should throw error while assigning invalid custom field", async () => {
-      synchronizer = new Synchronizer(issueKit, projectKit, logger, { field: "c", value: "d" });
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
-      await expect(synchronizer.synchronizeIssue(ctx)).rejects.toThrow();
+      await expect(
+        synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "c", value: "d" } } }),
+      ).rejects.toThrow();
       expect(logger.error).toBeCalledWith("Failed fetching project values.");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
     });
@@ -139,8 +140,7 @@ describe("Synchronizer tests", () => {
     test("should fetch custom fields data", async () => {
       const [field, value] = ["a", "B"];
       issueKit.getAllIssues.mockResolvedValue([{ number: 999, node_id: "123_asd" }]);
-      synchronizer = new Synchronizer(issueKit, projectKit, logger, { field, value });
-      await synchronizer.synchronizeIssue(ctx);
+      await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field, value } } });
       expect(projectKit.fetchProjectFieldNodeValues).toBeCalledWith(nodeData, { field, value });
     });
 
@@ -153,7 +153,6 @@ describe("Synchronizer tests", () => {
       ];
       const nodeValueData = { field: "eee", value: "fff" };
       issueKit.getAllIssues.mockResolvedValue(issues);
-      synchronizer = new Synchronizer(issueKit, projectKit, logger, { field: "ooo", value: "iiii" });
       projectKit.fetchProjectFieldNodeValues.mockResolvedValue(nodeValueData);
 
       let index = 1;
@@ -163,7 +162,7 @@ describe("Synchronizer tests", () => {
         .mockResolvedValueOnce(`_${index++}`)
         .mockResolvedValueOnce(`_${index++}`);
 
-      await synchronizer.synchronizeIssue(ctx);
+      await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "ooo", value: "iiii" } } });
       for (let i = 1; i < issues.length; i++) {
         expect(projectKit.changeIssueStateInProject).toHaveBeenNthCalledWith(i, `_${i}`, nodeData, nodeValueData);
       }
@@ -171,9 +170,10 @@ describe("Synchronizer tests", () => {
 
     test("should throw error while assigning invalid custom field", async () => {
       issueKit.getAllIssues.mockResolvedValue([{ number: 999, node_id: "123_asd" }]);
-      synchronizer = new Synchronizer(issueKit, projectKit, logger, { field: "k", value: "y" });
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
-      await expect(synchronizer.synchronizeIssue(ctx)).rejects.toThrow();
+      await expect(
+        synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "k", value: "y" } } }),
+      ).rejects.toThrow();
       expect(logger.error).toBeCalledWith("Failed fetching project values.");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
     });
