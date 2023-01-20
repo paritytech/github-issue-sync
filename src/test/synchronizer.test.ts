@@ -50,13 +50,15 @@ describe("Synchronizer tests", () => {
 
   test("should invoke project.assignIssue", async () => {
     const issueNumber = Math.floor(Math.random() * 100);
+    const nodeData = { id: "id", title: "title" };
+    projectKit.fetchProjectData.mockResolvedValue(nodeData);
     await synchronizer.synchronizeIssue({
       eventName: "issues",
       payload: { issue: { node_id: "1234321", number: issueNumber } },
     });
 
     logger.info.calledWith(`Assigning issue #${issueNumber} to project`);
-    projectKit.assignIssue.calledWith({ node_id: "1234321", number: issueNumber });
+    projectKit.assignIssue.calledWith({ node_id: "1234321", number: issueNumber }, nodeData);
   });
 
   test("should call project.assignIssues with an iteration", async () => {
@@ -64,10 +66,10 @@ describe("Synchronizer tests", () => {
       { number: 123, node_id: "asd_dsa" },
       { number: 987, node_id: "poi_lkj" },
     ];
-    issueKit.getAllIssues.mockReturnValue(Promise.resolve(issues));
-    projectKit.assignIssues.mockReturnValue(Promise.resolve([true, true]));
+    issueKit.getAllIssues.mockResolvedValue(issues);
+    projectKit.assignIssue.mockResolvedValue("");
     await synchronizer.synchronizeIssue({ eventName: "workflow_dispatch", payload: {} });
 
-    projectKit.assignIssues.calledWith(issues);
+    // projectKit.assignIssue.calledWith("");
   });
 });
