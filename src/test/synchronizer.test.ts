@@ -89,11 +89,11 @@ describe("Synchronizer tests", () => {
       expect(projectKit.changeIssueStateInProject).toBeCalledWith(issueCardNodeId, nodeData, nodeValueData);
     });
 
-    test("should return false on error while assigning custom field", async () => {
+    test("should throw error while assigning invalid custom field", async () => {
       synchronizer = new Synchronizer(issueKit, projectKit, logger, { field: "c", value: "d" });
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
-      expect(await synchronizer.synchronizeIssue(ctx)).toBeFalsy();
-      expect(logger.notice).toBeCalledWith("Failed fetching project values. Skipping project field assignment.");
+      await expect(synchronizer.synchronizeIssue(ctx)).rejects.toThrow();
+      expect(logger.error).toBeCalledWith("Failed fetching project values.");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
     });
   });
@@ -169,12 +169,12 @@ describe("Synchronizer tests", () => {
       }
     });
 
-    test("should return false on error while assigning custom field", async () => {
+    test("should throw error while assigning invalid custom field", async () => {
       issueKit.getAllIssues.mockResolvedValue([{ number: 999, node_id: "123_asd" }]);
       synchronizer = new Synchronizer(issueKit, projectKit, logger, { field: "k", value: "y" });
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
-      expect(await synchronizer.synchronizeIssue(ctx)).toBeFalsy();
-      expect(logger.notice).toBeCalledWith("Failed fetching project values. Skipping project field assignment.");
+      await expect(synchronizer.synchronizeIssue(ctx)).rejects.toThrow();
+      expect(logger.error).toBeCalledWith("Failed fetching project values.");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
     });
   });
