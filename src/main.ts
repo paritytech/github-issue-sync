@@ -1,4 +1,4 @@
-import { debug, error, getInput, info, setFailed } from "@actions/core";
+import { debug, getInput, info, setFailed } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
 import { CoreLogger } from "./github/CoreLogger";
@@ -51,11 +51,7 @@ const parsedContext: GitHubContext = {
 
 synchronizer
   .synchronizeIssue(parsedContext)
-  .then((result) => {
-    if (result) {
-      info("Operation finished successfully!");
-    } else {
-      error("There was a problem. Check logs for more information!");
-    }
+  .then(() => {
+    info("Operation finished successfully!");
   })
   .catch(setFailed);
