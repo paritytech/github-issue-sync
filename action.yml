@@ -11,11 +11,11 @@ inputs:
     type: number
   project_field:
     required: false
-    description: The name of the project field which the issue will be assigned to
+    description: The name of the project field that will be set to project_value
     type: string
   project_value:
     required: false
-    description: The value which will be set in the field
+    description: The value which will be set in the project_field
     type: string
   GITHUB_TOKEN:
     required: true
