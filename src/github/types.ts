@@ -16,6 +16,8 @@ export interface IProjectApi {
   /**
    * Assign an issue to a project
    * @param issue The issue object which has the number and the node_id
+   * @returns the issueCardId of the created issue. This ID is used in changeIssueStateInProject.
+   * @see changeIssueStateInProject
    */
   assignIssue(issue: Issue, project: NodeData): Promise<string>;
   /**
