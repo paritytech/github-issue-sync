@@ -46,7 +46,7 @@ const parsedContext: GitHubContext = {
     inputs: context.payload.inputs,
     issue: issue ? { number: issue.number, node_id: issue.node_id as string } : undefined,
   },
-  config: { customField: projectFields },
+  config: { projectField: projectFields },
 };
 
 synchronizer

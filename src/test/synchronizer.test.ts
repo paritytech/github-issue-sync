@@ -74,7 +74,7 @@ describe("Synchronizer tests", () => {
 
     test("should fetch custom fields data", async () => {
       const [field, value] = ["a", "B"];
-      await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field, value } } });
+      await synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field, value } } });
       expect(projectKit.fetchProjectFieldNodeValues).toBeCalledWith(nodeData, { field, value });
     });
 
@@ -84,7 +84,7 @@ describe("Synchronizer tests", () => {
       const issueCardNodeId = "issue_node_id_example";
       projectKit.assignIssue.mockResolvedValue(issueCardNodeId);
       expect(
-        await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "c", value: "d" } } }),
+        await synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "c", value: "d" } } }),
       ).toBeTruthy();
       expect(projectKit.changeIssueStateInProject).toBeCalledWith(issueCardNodeId, nodeData, nodeValueData);
     });
@@ -92,7 +92,7 @@ describe("Synchronizer tests", () => {
     test("should throw error while assigning invalid custom field", async () => {
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
       await expect(
-        synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "c", value: "d" } } }),
+        synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "c", value: "d" } } }),
       ).rejects.toThrow();
       expect(logger.error).toBeCalledWith("Failed fetching project values.");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
@@ -140,7 +140,7 @@ describe("Synchronizer tests", () => {
     test("should fetch custom fields data", async () => {
       const [field, value] = ["a", "B"];
       issueKit.getAllIssues.mockResolvedValue([{ number: 999, node_id: "123_asd" }]);
-      await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field, value } } });
+      await synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field, value } } });
       expect(projectKit.fetchProjectFieldNodeValues).toBeCalledWith(nodeData, { field, value });
     });
 
@@ -162,7 +162,7 @@ describe("Synchronizer tests", () => {
         .mockResolvedValueOnce(`_${index++}`)
         .mockResolvedValueOnce(`_${index++}`);
 
-      await synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "ooo", value: "iiii" } } });
+      await synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "ooo", value: "iiii" } } });
       for (let i = 1; i < issues.length; i++) {
         expect(projectKit.changeIssueStateInProject).toHaveBeenNthCalledWith(i, `_${i}`, nodeData, nodeValueData);
       }
@@ -172,7 +172,7 @@ describe("Synchronizer tests", () => {
       issueKit.getAllIssues.mockResolvedValue([{ number: 999, node_id: "123_asd" }]);
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
       await expect(
-        synchronizer.synchronizeIssue({ ...ctx, config: { customField: { field: "k", value: "y" } } }),
+        synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "k", value: "y" } } }),
       ).rejects.toThrow();
       expect(logger.error).toBeCalledWith("Failed fetching project values.");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);

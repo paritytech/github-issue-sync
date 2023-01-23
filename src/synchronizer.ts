@@ -11,7 +11,7 @@ export type GitHubContext = {
     issue?: Issue;
   };
   config?: {
-    customField?: FieldValues;
+    projectField?: FieldValues;
   };
 };
 
@@ -26,7 +26,7 @@ export class Synchronizer {
     if (context.eventName === "workflow_dispatch") {
       const excludeClosed = context.payload.inputs?.excludeClosed === "true";
       this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
-      return await this.updateAllIssues(excludeClosed, context.config?.customField);
+      return await this.updateAllIssues(excludeClosed, context.config?.projectField);
     } else if (context.eventName === "issues") {
       const { issue } = context.payload;
       if (!issue) {
@@ -34,7 +34,7 @@ export class Synchronizer {
       }
       this.logger.debug(`Received issue ${JSON.stringify(issue)}`);
       this.logger.info(`Assigning issue #${issue.number} to project`);
-      return await this.updateOneIssue(issue, context.config?.customField);
+      return await this.updateOneIssue(issue, context.config?.projectField);
     } else {
       const failMessage = `Event '${context.eventName}' is not expected. Failing.`;
       this.logger.warning(failMessage);
