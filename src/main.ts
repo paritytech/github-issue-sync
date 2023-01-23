@@ -1,4 +1,4 @@
-import { debug, getInput, info, setFailed } from "@actions/core";
+import { debug, error, getInput, info, setFailed } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
 import { CoreLogger } from "./github/CoreLogger";
@@ -49,9 +49,24 @@ const parsedContext: GitHubContext = {
   config: { projectField: projectFields },
 };
 
+const errorHandler = (e: Error) => {
+  let er = e;
+  setFailed(e);
+  while (er !== null) {
+    debug(`Stack -> ${er.stack as string}`);
+    if (er.cause != null) {
+      debug("Error has a nested error. Displaying.");
+      er = er.cause as Error;
+      error(er);
+    } else {
+      break;
+    }
+  }
+};
+
 synchronizer
   .synchronizeIssue(parsedContext)
   .then(() => {
     info("Operation finished successfully!");
   })
-  .catch(setFailed);
+  .catch(errorHandler);
