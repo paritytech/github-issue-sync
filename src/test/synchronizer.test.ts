@@ -93,8 +93,7 @@ describe("Synchronizer tests", () => {
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
       await expect(
         synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "c", value: "d" } } }),
-      ).rejects.toThrow();
-      expect(logger.error).toBeCalledWith("Failed fetching project values.");
+      ).rejects.toThrow("Failed fetching project values");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
     });
   });
@@ -173,8 +172,7 @@ describe("Synchronizer tests", () => {
       projectKit.fetchProjectFieldNodeValues.mockRejectedValue(new Error());
       await expect(
         synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "k", value: "y" } } }),
-      ).rejects.toThrow();
-      expect(logger.error).toBeCalledWith("Failed fetching project values.");
+      ).rejects.toThrow("Failed fetching project values");
       expect(projectKit.changeIssueStateInProject).toHaveBeenCalledTimes(0);
     });
   });

@@ -57,8 +57,7 @@ export class Synchronizer {
     try {
       return await this.projectKit.fetchProjectFieldNodeValues(project, customField);
     } catch (e) {
-      this.logger.error("Failed fetching project values.");
-      throw e;
+      throw new Error("Failed fetching project values", { cause: e });
     }
   }
 

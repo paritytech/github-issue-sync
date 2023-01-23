@@ -30,7 +30,7 @@ export const PROJECT_FIELD_ID_QUERY: string = `
 query($project: ID!) {
   node(id: $project) {
     ... on ProjectV2 {
-      fields(first: 20) {
+      fields(first: 20) { 
         nodes {
           ... on ProjectV2Field {
             id
@@ -112,8 +112,7 @@ export class ProjectKit implements IProjectApi {
 
       this.logger.debug("Returned " + JSON.stringify(op));
     } catch (e) {
-      this.logger.error("Failed while executing the 'UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY' query");
-      throw e;
+      throw new Error("Failed while executing the 'UPDATE_PROJECT_V2_ITEM_FIELD_VALUE_QUERY' query", { cause: e });
     }
   }
 
@@ -150,8 +149,7 @@ export class ProjectKit implements IProjectApi {
 
       return projectData.organization.projectV2;
     } catch (e) {
-      this.logger.error("Failed while executing the 'PROJECT_V2_QUERY' query");
-      throw e;
+      throw new Error("Failed while executing the 'PROJECT_V2_QUERY' query", { cause: e });
     }
   }
 
@@ -173,8 +171,7 @@ export class ProjectKit implements IProjectApi {
 
       return migration.addProjectV2ItemById.item.id;
     } catch (e) {
-      this.logger.error("Failed while executing 'ADD_PROJECT_V2_ITEM_BY_ID_QUERY' query");
-      throw e;
+      throw new Error("Failed while executing 'ADD_PROJECT_V2_ITEM_BY_ID_QUERY' query", { cause: e });
     }
   }
 
