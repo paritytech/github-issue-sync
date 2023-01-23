@@ -7,7 +7,16 @@ branding:
 inputs:
   project:
     required: true
+    description: The number of the project which the issues will be synced to
     type: number
+  project_field:
+    required: false
+    description: The name of the project field that will be set to project_value
+    type: string
+  project_value:
+    required: false
+    description: The value which will be set in the project_field
+    type: string
   GITHUB_TOKEN:
     required: true
     type: string
