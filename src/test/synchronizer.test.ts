@@ -67,8 +67,8 @@ describe("Synchronizer tests", () => {
       expect(projectKit.assignIssue).toBeCalledWith(ctx.payload.issue, nodeData);
     });
 
-    test("should return true on correct execution", async () => {
-      expect(await synchronizer.synchronizeIssue(ctx)).toBeTruthy();
+    test("should not throw on correct execution", async () => {
+      await synchronizer.synchronizeIssue(ctx);
       expect(logger.info).toBeCalledWith(`Assigning issue #${issueNumber} to project`);
     });
 
@@ -83,9 +83,7 @@ describe("Synchronizer tests", () => {
       projectKit.fetchProjectFieldNodeValues.mockResolvedValue(nodeValueData);
       const issueCardNodeId = "issue_node_id_example";
       projectKit.assignIssue.mockResolvedValue(issueCardNodeId);
-      expect(
-        await synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "c", value: "d" } } }),
-      ).toBeTruthy();
+      await synchronizer.synchronizeIssue({ ...ctx, config: { projectField: { field: "c", value: "d" } } });
       expect(projectKit.changeIssueStateInProject).toBeCalledWith(issueCardNodeId, nodeData, nodeValueData);
     });
 
@@ -112,13 +110,6 @@ describe("Synchronizer tests", () => {
       expect(logger.notice).toBeCalledWith("No issues found");
     });
 
-    test("should return true in correct execution", async () => {
-      const issues: Issue[] = [{ number: 1, node_id: "asd_dsa" }];
-
-      issueKit.getAllIssues.mockResolvedValue(issues);
-      expect(await synchronizer.synchronizeIssue(ctx)).toBeTruthy();
-    });
-
     test("should call assign Issues with an iteration", async () => {
       const issues: Issue[] = [
         { number: 1, node_id: "asd_dsa" },
@@ -128,7 +119,7 @@ describe("Synchronizer tests", () => {
       ];
 
       issueKit.getAllIssues.mockResolvedValue(issues);
-      expect(await synchronizer.synchronizeIssue(ctx)).toBeTruthy();
+      await synchronizer.synchronizeIssue(ctx);
 
       for (let i = 0; i < issues.length; i++) {
         expect(projectKit.assignIssue).toHaveBeenNthCalledWith(i + 1, issues[i], nodeData);

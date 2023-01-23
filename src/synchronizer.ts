@@ -22,7 +22,7 @@ export class Synchronizer {
     private readonly logger: ILogger,
   ) {}
 
-  async synchronizeIssue(context: GitHubContext): Promise<boolean> {
+  async synchronizeIssue(context: GitHubContext): Promise<void> | never {
     if (context.eventName === "workflow_dispatch") {
       const excludeClosed = context.payload.inputs?.excludeClosed === "true";
       this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
@@ -61,11 +61,10 @@ export class Synchronizer {
     }
   }
 
-  private async updateAllIssues(excludeClosed: boolean = false, customField?: FieldValues): Promise<boolean> {
+  private async updateAllIssues(excludeClosed: boolean = false, customField?: FieldValues): Promise<void> | never {
     const issues = await this.issueKit.getAllIssues(excludeClosed);
     if (issues?.length === 0) {
-      this.logger.notice("No issues found");
-      return false;
+      return this.logger.notice("No issues found");
     }
     this.logger.info(`Updating ${issues.length} issues`);
 
@@ -81,18 +80,14 @@ export class Synchronizer {
       );
       await Promise.all(assignCustomFieldPromise);
     }
-
-    return true;
   }
 
-  private async updateOneIssue(issue: Issue, customField?: FieldValues): Promise<boolean> {
+  private async updateOneIssue(issue: Issue, customField?: FieldValues): Promise<void> | never {
     const projectNode = await this.projectKit.fetchProjectData();
     const customFieldNodeData = await this.getCustomFieldNodeData(projectNode, customField);
     const issueCardId = await this.projectKit.assignIssue(issue, projectNode);
     if (customFieldNodeData) {
       await this.projectKit.changeIssueStateInProject(issueCardId, projectNode, customFieldNodeData);
     }
-
-    return true;
   }
 }
