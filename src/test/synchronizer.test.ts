@@ -55,7 +55,7 @@ describe("Synchronizer tests", () => {
     let ctx: GitHubContext;
     let issueNumber: number;
     beforeEach(() => {
-      issueNumber = Math.floor(Math.random() * 100);
+      issueNumber = 123;
       nodeData = { id: new Date().toDateString(), title: "Update one issue" };
       ctx = { eventName: "issues", payload: { issue: { node_id: "update_one_issue", number: issueNumber } } };
       projectKit.fetchProjectData.mockResolvedValue(nodeData);
