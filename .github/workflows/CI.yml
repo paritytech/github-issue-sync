@@ -1,0 +1,34 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - rzadp/test
+
+jobs:
+  check-licenses:
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: read
+    steps:
+      - uses: actions/checkout@v3.3.0
+        with:
+          repository: paritytech/polkadot
+          ref: '1c935f35139f3f43cb22009dc5c010dfbe6ad9e7'
+      - uses: actions/setup-node@v3.6.0
+        with:
+          node-version: '16.19.0'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@paritytech'
+      - name: Check the licenses
+        run: |
+          shopt -s globstar
+
+          npx @paritytech/license-scanner@0.0.3 scan \
+            --log-level debug \
+            --ensure-licenses Apache-2.0 \
+            --ensure-licenses GPL-3.0-only \
+            ./**/src/**/*.rs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
