@@ -51,7 +51,7 @@ export interface ILogger {
   warning(message: string | Error): void;
   error(message: string | Error): void;
   /** Only posts messages if the action is ran in debug mode */
-  debug(message: string): void;
+  debug(message: string, data?: Record<string, unknown>): void;
   /** Publishes a message that can be seen in the action preview */
   notice(message: string): void;
 }
