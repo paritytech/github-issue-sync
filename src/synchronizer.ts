@@ -1,17 +1,26 @@
 import { FieldValues, IIssues, ILogger, IProjectApi, Issue, NodeData } from "./github/types";
 
-// type IssueEvent = "opened" | "deleted" | "closed" | "reopened" | "labeled" | "unlabeled" | "transfered";
+export type IssueEvent = "opened" | "deleted" | "closed" | "reopened" | "labeled" | "unlabeled" | "transfered";
 
 type EventNames = "workflow_dispatch" | "issues" | string;
 
+type Payload = {
+  action?: IssueEvent | string;
+  inputs?: { excludeClosed?: "true" | "false" };
+  issue?: Issue;
+  label?: {
+    description: string;
+    id: number;
+    name: string;
+  };
+};
+
 export type GitHubContext = {
   eventName: EventNames;
-  payload: {
-    inputs?: { excludeClosed?: "true" | "false" };
-    issue?: Issue;
-  };
+  payload: Payload;
   config?: {
     projectField?: FieldValues;
+    labels?: string[];
   };
 };
 

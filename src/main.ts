@@ -38,16 +38,8 @@ const generateSynchronizer = (): Synchronizer => {
 const synchronizer = generateSynchronizer();
 
 const projectFields = getProjectFieldValues();
-const { issue } = context.payload;
-const parsedContext: GitHubContext = {
-  eventName: context.eventName,
-  payload: {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    inputs: context.payload.inputs,
-    issue: issue ? { number: issue.number, node_id: issue.node_id as string } : undefined,
-  },
-  config: { projectField: projectFields },
-};
+const { payload } = context;
+const parsedContext: GitHubContext = { eventName: context.eventName, payload, config: { projectField: projectFields } };
 
 const errorHandler = (e: Error) => {
   let er = e;
