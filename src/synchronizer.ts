@@ -39,13 +39,18 @@ export class Synchronizer {
       this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
       return await this.updateAllIssues(excludeClosed, context.config?.projectField);
     } else if (context.eventName === "issues") {
+      this.logger.debug("Payload received:", context.payload);
       const { issue } = context.payload;
       if (!issue) {
         throw new Error("Issue payload object was null");
       }
-      this.logger.debug(`Received issue ${JSON.stringify(issue)}`);
-      this.logger.info(`Assigning issue #${issue.number} to project`);
-      return await this.updateOneIssue(issue, context.config?.projectField);
+      this.logger.debug(`Received event: ${context.eventName}`);
+      if (this.shouldAssignIssue(context.payload, context.config?.labels)) {
+        this.logger.info(`Assigning issue #${issue.number} to project`);
+        return await this.updateOneIssue(issue, context.config?.projectField);
+      } else {
+        return this.logger.info("Skipped assigment as it didn't fullfill requirements.");
+      }
     } else {
       const failMessage = `Event '${context.eventName}' is not expected. Failing.`;
       this.logger.warning(failMessage);
