@@ -39,6 +39,7 @@ export class Synchronizer {
       this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
       return await this.updateAllIssues(excludeClosed, context.config?.projectField);
     } else if (context.eventName === "issues") {
+      this.logger.debug(`Required labels are: '${JSON.stringify(context.config?.labels)}'`);
       this.logger.debug("Payload received:", context.payload);
       const { issue } = context.payload;
       if (!issue) {
