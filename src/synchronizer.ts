@@ -106,7 +106,9 @@ export class Synchronizer {
         this.logger.info(`Found matching label '${labelName}'`);
         return true;
       } else {
-        this.logger.notice(`Label '${labelName}' does not match any of the labels '${labels}'. Skipping.`);
+        this.logger.notice(
+          `Label '${labelName}' does not match any of the labels '${JSON.stringify(labels)}'. Skipping.`,
+        );
         return false;
       }
     } else if (action === "unlabeled") {
