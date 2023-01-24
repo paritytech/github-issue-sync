@@ -90,20 +90,22 @@ export class Synchronizer {
     const action = payload.action as IssueEvent;
 
     if (action === "labeled") {
-      // If this is a labeling event but there are no labels in the config we skip them
-      if (!labels || labels.length === 0) {
-        this.logger.notice("No required labels found. Skipping assignment.");
-        return false;
-      }
-
       const labelName = payload.label?.name;
       // Shouldn't happen. Throw and find out what is this kind of event.
       if (!labelName) {
         throw new Error("No label found in a labeling event!");
       }
 
+      this.logger.info(`Label ${labelName} was added to the issue.`);
+
+      // If this is a labeling event but there are no labels in the config we skip them
+      if (!labels || labels.length === 0) {
+        this.logger.notice("No required labels found for event. Skipping assignment.");
+        return false;
+      }
+
       if (toLowerCase(labels).indexOf(labelName.toLowerCase()) > -1) {
-        this.logger.info(`Found matching label '${labelName}'`);
+        this.logger.info(`Found matching label '${labelName}' in required labels.`);
         return true;
       } else {
         this.logger.notice(
@@ -112,7 +114,7 @@ export class Synchronizer {
         return false;
       }
     } else if (action === "unlabeled") {
-      this.logger.warning("No support for 'unlabeled' event yet. Skipping");
+      this.logger.warning("No support for 'unlabeled' event. Skipping");
       return false;
     } else {
       // if no labels are required and this is not a labeling event, assign the issue.
