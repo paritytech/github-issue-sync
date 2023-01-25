@@ -9,7 +9,6 @@ type Payload = {
   inputs?: { excludeClosed?: "true" | "false" };
   issue?: Issue;
   label?: {
-    description: string;
     id: number;
     name: string;
   };
@@ -63,7 +62,7 @@ export class Synchronizer {
    * Labels can be either an array of objects or an array of string (or maybe both?)
    * This functions cleans them and returns all the labels names as a string array
    */
-  private convertLabelArray(labels?: (string | { name?: string })[]): string[] {
+  convertLabelArray(labels?: (string | { name?: string })[]): string[] {
     if (!labels || labels.length === 0) {
       return [];
     }
@@ -86,7 +85,7 @@ export class Synchronizer {
    * @param labels labels required for the action. Can be null or empty
    * @returns true if the label should be assigned, false if it should be skipped
    */
-  private shouldAssignIssue(payload: Payload, labels?: string[]): boolean {
+  shouldAssignIssue(payload: Payload, labels?: string[]): boolean {
     const action = payload.action as IssueEvent;
 
     if (action === "labeled") {
