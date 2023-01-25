@@ -37,7 +37,7 @@ export class Synchronizer {
     if (context.eventName === "workflow_dispatch") {
       const excludeClosed = context.payload.inputs?.excludeClosed === "true";
       this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
-      return await this.updateAllIssues(excludeClosed, context.config?.projectField);
+      return await this.updateAllIssues(excludeClosed, context.config?.projectField, context.config?.labels);
     } else if (context.eventName === "issues") {
       this.logger.debug(`Required labels are: '${JSON.stringify(context.config?.labels)}'`);
       this.logger.debug("Payload received:", context.payload);
@@ -163,8 +163,12 @@ export class Synchronizer {
     }
   }
 
-  private async updateAllIssues(excludeClosed: boolean = false, customField?: FieldValues): Promise<void> | never {
-    const issues = await this.issueKit.getAllIssues(excludeClosed);
+  private async updateAllIssues(
+    excludeClosed: boolean = false,
+    customField?: FieldValues,
+    labels?: string[],
+  ): Promise<void> | never {
+    const issues = await this.issueKit.getAllIssues(excludeClosed, labels);
     if (issues?.length === 0) {
       return this.logger.notice("No issues found");
     }

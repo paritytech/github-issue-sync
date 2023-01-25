@@ -43,7 +43,7 @@ export interface IIssues {
    * Returns the node_id for all the issues available in the repository
    * @param includeClosed exclude issues which are closed from the data agregation.
    */
-  getAllIssues(excludeClosed: boolean): Promise<Issue[]>;
+  getAllIssues(excludeClosed: boolean, labels?: string[]): Promise<Issue[]>;
 }
 
 export interface ILogger {
