@@ -80,7 +80,7 @@ export class Synchronizer {
   }
 
   /**
-   * Method which takes all of the (predicted) cases and calculates if the issue should be assigned of skipped
+   * Method which takes all of the (predicted) cases and calculates if the issue should be assigned or skipped
    * @param payload object which contains both the event, the issue type and it's information
    * @param labels labels required for the action. Can be null or empty
    * @returns true if the label should be assigned, false if it should be skipped
@@ -106,37 +106,36 @@ export class Synchronizer {
       if (toLowerCase(labels).indexOf(labelName.toLowerCase()) > -1) {
         this.logger.info(`Found matching label '${labelName}' in required labels.`);
         return true;
-      } else {
-        this.logger.notice(
-          `Label '${labelName}' does not match any of the labels '${JSON.stringify(labels)}'. Skipping.`,
-        );
-        return false;
       }
+      this.logger.notice(
+        `Label '${labelName}' does not match any of the labels '${JSON.stringify(labels)}'. Skipping.`,
+      );
+      return false;
     } else if (action === "unlabeled") {
       this.logger.warning("No support for 'unlabeled' event. Skipping");
       return false;
-    } else {
-      // if no labels are required and this is not a labeling event, assign the issue.
-      if (!labels || labels.length === 0) {
-        this.logger.info("Matching requirements: not a labeling event and no labels found in the configuration.");
+    }
+
+    // if no labels are required and this is not a labeling event, assign the issue.
+    if (!labels || labels.length === 0) {
+      this.logger.info("Matching requirements: not a labeling event and no labels found in the configuration.");
+      return true;
+    }
+    // if the issue in this event has labels and a matching label config, assign it.
+    const issueLabels = payload.issue?.labels ?? null;
+    if (labels.length > 0 && issueLabels && issueLabels.length > 0) {
+      // complex query. Sanitizing everything to a lower case string array first
+      const parsedLabels = toLowerCase(this.convertLabelArray(issueLabels));
+      const requiredLabels = toLowerCase(labels);
+      // checking if an element in one array is included in the second one
+      const matchingElement = parsedLabels.some((pl) => requiredLabels.includes(pl));
+      if (matchingElement) {
+        this.logger.info(
+          `Found matching element between ${JSON.stringify(parsedLabels)} and ${JSON.stringify(labels)}`,
+        );
         return true;
       }
-      // if the issue in this event has labels and a matching label config, assign it.
-      const issueLabels = payload.issue?.labels ?? null;
-      if (labels.length > 0 && issueLabels && issueLabels.length > 0) {
-        // complex query. Sanitizing everything to a lower case string array first
-        const parsedLabels = toLowerCase(this.convertLabelArray(issueLabels));
-        const requiredLabels = toLowerCase(labels);
-        // checking if an element in one array is included in the second one
-        const matchingElement = parsedLabels.some((pl) => requiredLabels.includes(pl));
-        if (matchingElement) {
-          this.logger.info(
-            `Found matching element between ${JSON.stringify(parsedLabels)} and ${JSON.stringify(labels)}`,
-          );
-          return true;
-        }
-        return false;
-      }
+      return false;
     }
 
     this.logger.debug(`Case ${action} not considered. Accepted with the following payload: `, payload);

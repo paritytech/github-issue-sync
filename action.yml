@@ -19,7 +19,7 @@ inputs:
     type: string
   labels:
     required: false
-    description: array of labels required to execute the action
+    description: array of labels required to execute the action. See Readme for input format.
     type: string
   GITHUB_TOKEN:
     required: true
