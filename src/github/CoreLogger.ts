@@ -13,12 +13,8 @@ export class CoreLogger implements ILogger {
   error(message: string | Error): void {
     core.error(message);
   }
-  debug(message: string, data?: Record<string, unknown>): void {
-    if (!data) {
-      core.debug(message);
-    } else {
-      core.debug(message + JSON.stringify(data));
-    }
+  debug(message: string): void {
+    core.debug(message);
   }
   notice(message: string): void {
     core.notice(message);

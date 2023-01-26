@@ -39,7 +39,7 @@ export class Synchronizer {
       return await this.updateAllIssues(excludeClosed, context.config?.projectField, context.config?.labels);
     } else if (context.eventName === "issues") {
       this.logger.debug(`Required labels are: '${JSON.stringify(context.config?.labels)}'`);
-      this.logger.debug("Payload received:", context.payload);
+      this.logger.debug("Payload received: " + JSON.stringify(context.payload));
       const { issue } = context.payload;
       if (!issue) {
         throw new Error("Issue payload object was null");
@@ -138,7 +138,7 @@ export class Synchronizer {
       return false;
     }
 
-    this.logger.debug(`Case ${action} not considered. Accepted with the following payload: `, payload);
+    this.logger.debug(`Case ${action} not considered. Accepted with the following payload: ${JSON.stringify(payload)}`);
     return true;
   }
 
