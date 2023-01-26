@@ -63,8 +63,8 @@ jobs:
           # Optional unless that project_field was set up. Then this field is required.
           # The value to modify in the project field
           project_value: To do
-          # Optional, labels to work with.
-          # If this value is set, the system will ignore any issue that doesn't contain that label(s).
+          # Optional, labels to work with. Read below to see how to configure it.
+          # If this value is set, the action will be applied only to issues with such label(s).
           labels: |
             duplicate
             bug
@@ -78,7 +78,7 @@ It accepts either:
 ```yml
 labels: my label name
 ```
-or an array of labels using a pipe:
+or an array of labels using a `pipe`:
 ```yml
 labels: |
   some label
