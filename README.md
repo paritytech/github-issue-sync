@@ -33,7 +33,6 @@ on:
   issues:
     types:
       - opened
-      - reopened
       - labeled
   workflow_dispatch:
     inputs:
@@ -54,12 +53,49 @@ jobs:
           # This is a Personal Access Token and it needs to have the following permissions
           # - "read:org": used to read the project's board
           # - "write:org": used to assign issues to the project's board
-          PROJECT_TOKEN: ${{ steps.generate_token.outputs.token }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
           # The number of the project which the issues will be synced to
           # You can find this in https://github.com/orgs/@ORGANIZATION/projects/<NUMBER>
           project: 4
+          # Optional, the project field to modify with a new value
+          # Found more in https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields/about-single-select-fields
+          project_field: Status
+          # Optional unless that project_field was set up. Then this field is required.
+          # The value to modify in the project field
+          project_value: To do
+          # Optional, labels to work with. Read below to see how to configure it.
+          # If this value is set, the action will be applied only to issues with such label(s).
+          labels: |
+            duplicate
+            bug
+            invalid
 ```
 You can generate a new token [in your user's token dashboard](https://github.com/settings/tokens/new).
+
+### Warning about labels field
+The labels field accepts an array or a single value, [but only with some particular format](https://github.com/actions/toolkit/issues/184#issuecomment-1198653452), so it is important to follow it.
+It accepts either:
+```yml
+labels: my label name
+```
+or an array of labels using a `pipe`:
+```yml
+labels: |
+  some label
+  another label
+  third label
+```
+It **does not** support the following type of arrays:
+```yml
+# not this one
+labels:
+  - some label
+  - another one
+
+# also doesn't support this one
+labels: ["some label", "another one"]
+```
+
 ### Using a GitHub app instead of a PAT
 In some cases, specially in big organizations, it is more organized to use a GitHub app to authenticate, as it allows us to give it permissions per repository and we can fine-grain them even better. If you wish to do that, you need to create a GitHub app with the following permissions:
 - Repository permissions:
@@ -87,6 +123,65 @@ Because this project is intended to be used with a token we need to do an extra 
           # The previous step generates a token which is used as the input for this action
           PROJECT_TOKEN: ${{ steps.generate_token.outputs.token }}
 ```
+
+## Combining labels and different fields
+
+As the system works different when there are labels available, you can set up steps to work with different cases. 
+Let's do an example:
+- You have 3 cases you want to handle:
+  - When an new issue is created, assign it to `project 1` and set the `Status` to `To do`.
+  - When an issue is labeled as `DevOps` or `CI` assign it to `project 2` and set the `Status` to `Needs reviewing`.
+  - When an issue is labeled as `Needs planning` assign it to `project 1` and set the `Condition` to `Review on next sprint`.
+
+```yml
+name: GitHub Issue Sync
+
+on:
+  issues:
+    types:
+      - opened
+      - labeled
+  workflow_dispatch:
+    inputs:
+      excludeClosed:
+        description: 'Exclude closed issues in the sync.'
+        type: boolean 
+        default: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync new issues
+        uses: paritytech/github-issue-sync@master
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          project: 1
+          project_field: Status
+          project_value: To do
+      - name: Sync DevOps issues
+        uses: paritytech/github-issue-sync@master
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          project: 2
+          project_field: Status
+          project_value: Needs reviewing
+          labels: |
+            DevOps
+            CI
+      - name: Sync issues for the next sprint
+        uses: paritytech/github-issue-sync@master
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          project: 1
+          project_field: Condition
+          project_value: Review on next sprint
+          labels: Needs planning
+```
+With this configuration you will be able to handle all of the aforementioned cases.
 
 ## Development
 To work on this app, you require

@@ -17,6 +17,10 @@ inputs:
     required: false
     description: The value which will be set in the project_field
     type: string
+  labels:
+    required: false
+    description: array of labels required to execute the action. See Readme for input format.
+    type: string
   GITHUB_TOKEN:
     required: true
     type: string

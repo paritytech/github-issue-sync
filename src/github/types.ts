@@ -1,6 +1,6 @@
 export type Repository = { owner: string; repo: string };
 
-export type Issue = { number: number; node_id: string };
+export type Issue = { number: number; node_id?: string; labels?: (string | { name?: string })[] };
 
 /** Key value pair with the name/id of a field and the name/id of its value */
 export type FieldValues = { field: string; value: string };
@@ -43,7 +43,7 @@ export interface IIssues {
    * Returns the node_id for all the issues available in the repository
    * @param includeClosed exclude issues which are closed from the data agregation.
    */
-  getAllIssues(excludeClosed: boolean): Promise<Issue[]>;
+  getAllIssues(excludeClosed: boolean, labels?: string[]): Promise<Issue[]>;
 }
 
 export interface ILogger {

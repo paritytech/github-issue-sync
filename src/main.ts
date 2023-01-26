@@ -1,4 +1,4 @@
-import { debug, error, getInput, info, setFailed } from "@actions/core";
+import { debug, error, getInput, getMultilineInput, info, setFailed } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
 import { CoreLogger } from "./github/CoreLogger";
@@ -16,6 +16,8 @@ const getProjectFieldValues = (): { field: string; value: string } | undefined =
     debug("'project_field' and 'project_value' are empty.");
   }
 };
+
+const getRequiredLabels = (): string[] => getMultilineInput("labels");
 
 //* * Generates the class that will handle the project logic */
 const generateSynchronizer = (): Synchronizer => {
@@ -36,17 +38,14 @@ const generateSynchronizer = (): Synchronizer => {
 };
 
 const synchronizer = generateSynchronizer();
+const labels = getRequiredLabels();
 
 const projectFields = getProjectFieldValues();
-const { issue } = context.payload;
+const { payload } = context;
 const parsedContext: GitHubContext = {
   eventName: context.eventName,
-  payload: {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    inputs: context.payload.inputs,
-    issue: issue ? { number: issue.number, node_id: issue.node_id as string } : undefined,
-  },
-  config: { projectField: projectFields },
+  payload,
+  config: { projectField: projectFields, labels },
 };
 
 const errorHandler = (e: Error) => {
