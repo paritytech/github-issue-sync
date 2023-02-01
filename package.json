@@ -1,6 +1,6 @@
 {
   "name": "github-issue-sync",
-  "version": "0.0.1",
+  "version": "0.3.1",
   "description": "Synchronize issues to GitHub Project boards",
   "author": "Parity <admin@parity.io> (https://parity.io)",
   "repository": {
