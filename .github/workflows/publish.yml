@@ -1,3 +1,4 @@
+name: Publish package to GitHub Packages
 on:
   push:
     branches:
@@ -50,3 +51,39 @@ jobs:
           release_name: Release ${{ steps.autotag.outputs.tagname }}
           body: |
             ${{ steps.Changelog.outputs.changelog }}
+
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    needs: [tag]
+    if: needs.tag.outputs.tagname != ''
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - name: Push image
+        run: |
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ ! -z $TAG ]] && VERSION=$(echo $TAG | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "main" ] && VERSION=latest
+
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+        env:
+          TAG: ${{ needs.tag.outputs.tagname }}
