@@ -29,4 +29,4 @@ inputs:
     type: string
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'docker://ghcr.io/bullrich/github-issue-sync/example:0.3.1'
