@@ -1,0 +1,16 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  IMAGE_NAME: action
+
+jobs:
+  test-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.3.0
+      - name: Run tests
+        run: docker build . --file Dockerfile
