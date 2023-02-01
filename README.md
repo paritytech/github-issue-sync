@@ -1,6 +1,8 @@
 
 # Introduction
 
+![Publish](https://github.com/paritytech/github-issue-sync/actions/workflows/publish.yml/badge.svg?branch=master)
+
 This project enables syncing GitHub Issues to a [GitHub Project](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects).
 
 ## Why is this necessary?
