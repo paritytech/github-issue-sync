@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.3.0
-      - name: Run tests
+      - name: Check that the image builds
         run: docker build . --file Dockerfile
 
   test-versions:
