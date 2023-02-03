@@ -1,4 +1,6 @@
-FROM node:18
+FROM node:18 as Builder
+
+WORKDIR /action
 
 COPY package.json yarn.lock ./
 
@@ -8,4 +10,8 @@ COPY . .
 
 RUN yarn build
 
-CMD ["yarn", "start"]
+FROM node:18-slim
+
+COPY --from=Builder /action/dist /action
+
+ENTRYPOINT ["node", "/action/index.js"]
