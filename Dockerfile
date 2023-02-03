@@ -10,7 +10,7 @@ RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN ncc build src/main.ts -o dist
+RUN yarn build
 
 FROM node:18-slim
 
