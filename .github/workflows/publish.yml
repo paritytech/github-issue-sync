@@ -63,7 +63,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Changelog
-        uses: Bullrich/generate-release-changelog@master
+        uses: Bullrich/generate-release-changelog@2.0.2
         id: Changelog
         env:
           REPO: ${{ github.repository }}
