@@ -12,14 +12,14 @@ jobs:
   test-image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4.1.1
       - name: Check that the image builds
         run: docker build . --file Dockerfile
 
   test-versions:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4.1.1
       - name: Extract package.json version
         id: package_version
         run: echo "VERSION=$(jq '.version' -r package.json)" >> $GITHUB_OUTPUT
@@ -52,7 +52,7 @@ jobs:
       tagcreated: ${{ steps.autotag.outputs.tagcreated }}
       tagname: ${{ steps.autotag.outputs.tagname }}
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
       - uses: butlerlogic/action-autotag@stable
@@ -85,7 +85,7 @@ jobs:
     needs: [tag]
     if: needs.tag.outputs.tagname != ''
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       - name: Build image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME
       - name: Log into registry
