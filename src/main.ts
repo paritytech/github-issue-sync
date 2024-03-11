@@ -1,4 +1,11 @@
-import { debug, error, getInput, getMultilineInput, info, setFailed } from "@actions/core";
+import {
+  debug,
+  error,
+  getInput,
+  getMultilineInput,
+  info,
+  setFailed,
+} from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
 import { CoreLogger } from "./github/CoreLogger";
@@ -6,7 +13,9 @@ import { IssueApi } from "./github/issueKit";
 import { ProjectKit } from "./github/projectKit";
 import { GitHubContext, Synchronizer } from "./synchronizer";
 
-const getProjectFieldValues = (): { field: string; value: string } | undefined => {
+const getProjectFieldValues = ():
+  | { field: string; value: string }
+  | undefined => {
   const field = getInput("project_field");
   const value = getInput("project_value");
 
@@ -30,9 +39,16 @@ const generateSynchronizer = (): Synchronizer => {
 
   const kit = getOctokit(repoToken);
   const issueKit = new IssueApi(kit, repo);
-  const projectGraphQl = getOctokit(orgToken).graphql.defaults({ headers: { authorization: `token ${orgToken}` } });
+  const projectGraphQl = getOctokit(orgToken).graphql.defaults({
+    headers: { authorization: `token ${orgToken}` },
+  });
   const logger = new CoreLogger();
-  const projectKit = new ProjectKit(projectGraphQl, repo, projectNumber, logger);
+  const projectKit = new ProjectKit(
+    projectGraphQl,
+    repo,
+    projectNumber,
+    logger,
+  );
 
   return new Synchronizer(issueKit, projectKit, logger);
 };

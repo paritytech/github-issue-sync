@@ -1,6 +1,10 @@
 export type Repository = { owner: string; repo: string };
 
-export type Issue = { number: number; node_id?: string; labels?: (string | { name?: string })[] };
+export type Issue = {
+  number: number;
+  node_id?: string;
+  labels?: (string | { name?: string })[];
+};
 
 /** Key value pair with the name/id of a field and the name/id of its value */
 export type FieldValues = { field: string; value: string };
@@ -27,9 +31,16 @@ export interface IProjectApi {
    * @param projectFields The literal names of the fields to be modified
    * @returns The id of both the field and the value
    */
-  fetchProjectFieldNodeValues(project: NodeData, projectFields?: FieldValues): Promise<FieldValues>;
+  fetchProjectFieldNodeValues(
+    project: NodeData,
+    projectFields?: FieldValues,
+  ): Promise<FieldValues>;
   // getProjectIdFromIssue(issueId: number): Promise<number>;
-  changeIssueStateInProject(issueCardId: string, project: NodeData, fields: FieldValues): Promise<void>;
+  changeIssueStateInProject(
+    issueCardId: string,
+    project: NodeData,
+    fields: FieldValues,
+  ): Promise<void>;
 }
 
 /** Class managing the instance of issues */

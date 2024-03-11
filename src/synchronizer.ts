@@ -1,6 +1,20 @@
-import { FieldValues, IIssues, ILogger, IProjectApi, Issue, NodeData } from "./github/types";
+import {
+  FieldValues,
+  IIssues,
+  ILogger,
+  IProjectApi,
+  Issue,
+  NodeData,
+} from "./github/types";
 
-export type IssueEvent = "opened" | "deleted" | "closed" | "reopened" | "labeled" | "unlabeled" | "transfered";
+export type IssueEvent =
+  | "opened"
+  | "deleted"
+  | "closed"
+  | "reopened"
+  | "labeled"
+  | "unlabeled"
+  | "transfered";
 
 type EventNames = "workflow_dispatch" | "issues" | string;
 
@@ -23,7 +37,8 @@ export type GitHubContext = {
   };
 };
 
-const toLowerCase = (array: string[]): string[] => array.map((a) => a.toLowerCase());
+const toLowerCase = (array: string[]): string[] =>
+  array.map((a) => a.toLowerCase());
 
 export class Synchronizer {
   constructor(
@@ -35,10 +50,20 @@ export class Synchronizer {
   async synchronizeIssue(context: GitHubContext): Promise<void> | never {
     if (context.eventName === "workflow_dispatch") {
       const excludeClosed = context.payload.inputs?.excludeClosed === "true";
-      this.logger.notice(excludeClosed ? "Closed issues will NOT be synced." : "Closed issues will be synced.");
-      return await this.updateAllIssues(excludeClosed, context.config?.projectField, context.config?.labels);
+      this.logger.notice(
+        excludeClosed
+          ? "Closed issues will NOT be synced."
+          : "Closed issues will be synced.",
+      );
+      return await this.updateAllIssues(
+        excludeClosed,
+        context.config?.projectField,
+        context.config?.labels,
+      );
     } else if (context.eventName === "issues") {
-      this.logger.debug(`Required labels are: '${JSON.stringify(context.config?.labels)}'`);
+      this.logger.debug(
+        `Required labels are: '${JSON.stringify(context.config?.labels)}'`,
+      );
       this.logger.debug("Payload received: " + JSON.stringify(context.payload));
       const { issue } = context.payload;
       if (!issue) {
@@ -49,7 +74,9 @@ export class Synchronizer {
         this.logger.info(`Assigning issue #${issue.number} to project`);
         return await this.updateOneIssue(issue, context.config?.projectField);
       } else {
-        return this.logger.info("Skipped assigment as it didn't fullfill requirements.");
+        return this.logger.info(
+          "Skipped assigment as it didn't fullfill requirements.",
+        );
       }
     } else {
       const failMessage = `Event '${context.eventName}' is not expected. Failing.`;
@@ -99,12 +126,16 @@ export class Synchronizer {
 
       // If this is a labeling event but there are no labels in the config we skip them
       if (!labels || labels.length === 0) {
-        this.logger.notice("No required labels found for event. Skipping assignment.");
+        this.logger.notice(
+          "No required labels found for event. Skipping assignment.",
+        );
         return false;
       }
 
       if (toLowerCase(labels).indexOf(labelName.toLowerCase()) > -1) {
-        this.logger.info(`Found matching label '${labelName}' in required labels.`);
+        this.logger.info(
+          `Found matching label '${labelName}' in required labels.`,
+        );
         return true;
       }
       this.logger.notice(
@@ -118,7 +149,9 @@ export class Synchronizer {
 
     // if no labels are required and this is not a labeling event, assign the issue.
     if (!labels || labels.length === 0) {
-      this.logger.info("Matching requirements: not a labeling event and no labels found in the configuration.");
+      this.logger.info(
+        "Matching requirements: not a labeling event and no labels found in the configuration.",
+      );
       return true;
     }
     // if the issue in this event has labels and a matching label config, assign it.
@@ -128,7 +161,9 @@ export class Synchronizer {
       const parsedLabels = toLowerCase(this.convertLabelArray(issueLabels));
       const requiredLabels = toLowerCase(labels);
       // checking if an element in one array is included in the second one
-      const matchingElement = parsedLabels.some((pl) => requiredLabels.includes(pl));
+      const matchingElement = parsedLabels.some((pl) =>
+        requiredLabels.includes(pl),
+      );
       if (matchingElement) {
         this.logger.info(
           `Found matching element between ${JSON.stringify(parsedLabels)} and ${JSON.stringify(labels)}`,
@@ -138,7 +173,9 @@ export class Synchronizer {
       return false;
     }
 
-    this.logger.debug(`Case ${action} not considered. Accepted with the following payload: ${JSON.stringify(payload)}`);
+    this.logger.debug(
+      `Case ${action} not considered. Accepted with the following payload: ${JSON.stringify(payload)}`,
+    );
     return true;
   }
 
@@ -149,20 +186,26 @@ export class Synchronizer {
    * @param customField key value pair with the names of the fields. Not case sensitive
    * @returns Returns a key value pair with the node id of both the field and the value or null if the application threw an error
    */
-  private async getCustomFieldNodeData(project: NodeData, customField?: FieldValues): Promise<FieldValues | null> {
+  private async getCustomFieldNodeData(
+    project: NodeData,
+    customField?: FieldValues,
+  ): Promise<FieldValues | null> {
     if (!customField) {
       return null;
     }
 
     try {
-      return await this.projectKit.fetchProjectFieldNodeValues(project, customField);
+      return await this.projectKit.fetchProjectFieldNodeValues(
+        project,
+        customField,
+      );
     } catch (e) {
       throw new Error("Failed fetching project values", { cause: e });
     }
   }
 
   private async updateAllIssues(
-    excludeClosed: boolean = false,
+    excludeClosed = false,
     customField?: FieldValues,
     labels?: string[],
   ): Promise<void> | never {
@@ -173,25 +216,46 @@ export class Synchronizer {
     this.logger.info(`Updating ${issues.length} issues`);
 
     const projectNode = await this.projectKit.fetchProjectData();
-    const customFieldNodeData = await this.getCustomFieldNodeData(projectNode, customField);
-    const issuesAssigmentPromises = issues.map((issue) => this.projectKit.assignIssue(issue, projectNode));
+    const customFieldNodeData = await this.getCustomFieldNodeData(
+      projectNode,
+      customField,
+    );
+    const issuesAssigmentPromises = issues.map((issue) =>
+      this.projectKit.assignIssue(issue, projectNode),
+    );
     const issuesCardIds = await Promise.all(issuesAssigmentPromises);
     this.logger.debug(`Finished assigning ${issuesCardIds.length} issues`);
     if (customFieldNodeData) {
-      this.logger.debug("Found custom field node data for " + JSON.stringify(customField));
+      this.logger.debug(
+        "Found custom field node data for " + JSON.stringify(customField),
+      );
       const assignCustomFieldPromise = issuesCardIds.map((ici) =>
-        this.projectKit.changeIssueStateInProject(ici, projectNode, customFieldNodeData),
+        this.projectKit.changeIssueStateInProject(
+          ici,
+          projectNode,
+          customFieldNodeData,
+        ),
       );
       await Promise.all(assignCustomFieldPromise);
     }
   }
 
-  private async updateOneIssue(issue: Issue, customField?: FieldValues): Promise<void> | never {
+  private async updateOneIssue(
+    issue: Issue,
+    customField?: FieldValues,
+  ): Promise<void> | never {
     const projectNode = await this.projectKit.fetchProjectData();
-    const customFieldNodeData = await this.getCustomFieldNodeData(projectNode, customField);
+    const customFieldNodeData = await this.getCustomFieldNodeData(
+      projectNode,
+      customField,
+    );
     const issueCardId = await this.projectKit.assignIssue(issue, projectNode);
     if (customFieldNodeData) {
-      await this.projectKit.changeIssueStateInProject(issueCardId, projectNode, customFieldNodeData);
+      await this.projectKit.changeIssueStateInProject(
+        issueCardId,
+        projectNode,
+        customFieldNodeData,
+      );
     }
   }
 }
